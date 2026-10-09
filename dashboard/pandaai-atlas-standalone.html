@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PandaAI Research Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a research notebook. Sticky section nav, then stacked "lab benches", each pairing a short explainer with a live instrument. */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#15201c; --muted:#5b6a64; --line:#d5ddd9;
+  --jade:#0f7a5c; --jade-soft:#dcefe7; --bamboo:#b5892b; --bamboo-soft:#f5ecd6;
+  --good:#1c7c4a; --bad:#b4372f; --bad-soft:#f6dedb;
+  --display:"Schibsted Grotesk","Helvetica Neue",Arial,sans-serif;
+  --body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1513; --surface:#17201d; --ink:#e4ece8; --muted:#97a8a1; --line:#2a3833;
+  --jade:#4cc79c; --jade-soft:#173a2f; --bamboo:#ddb459; --bamboo-soft:#3a3020;
+  --good:#5ccf8f; --bad:#ef7b70; --bad-soft:#40211e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1513; --surface:#17201d; --ink:#e4ece8; --muted:#97a8a1; --line:#2a3833;
+  --jade:#4cc79c; --jade-soft:#173a2f; --bamboo:#ddb459; --bamboo-soft:#3a3020;
+  --good:#5ccf8f; --bad:#ef7b70; --bad-soft:#40211e; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--body);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2rem,5vw,3.1rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.6rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:700}
+p{margin:0;max-width:66ch}
+a{color:var(--jade)}
+code,.mono{font-family:var(--mono);font-size:.86em}
+.eyebrow{font:600 .74rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+nav.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav.top .in{max-width:1120px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;overflow-x:auto}
+nav.top a{flex:none;text-decoration:none;color:var(--muted);font:600 .85rem var(--body);padding:6px 10px;border-radius:6px}
+nav.top a:hover,nav.top a:focus-visible{color:var(--ink);background:var(--surface);outline:none}
+header.hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:32px;padding-block:44px 28px;align-items:end}
+.hero .lede{font-size:1.12rem;color:var(--muted);margin-top:14px}
+.claims{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.claim{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.claim b{display:block;font:800 2rem/1 var(--display);color:var(--jade);font-variant-numeric:tabular-nums}
+.claim.dd b{color:var(--bamboo)}
+.claim span{font-size:.88rem;color:var(--muted)}
+.claimnote{grid-column:1/-1;font-size:.82rem;color:var(--muted)}
+section{padding-block:40px;border-top:1px solid var(--line);display:grid;gap:20px}
+.sechead{display:grid;gap:8px}
+.sechead p{color:var(--muted)}
+.bench{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:24px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
+.stack{display:grid;gap:12px}
+.note{font-size:.86rem;color:var(--muted);border-left:3px solid var(--bamboo);padding-left:10px}
+/* paper list */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:600 .82rem var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+input[type=search]{font:inherit;padding:7px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);min-width:0;flex:1 1 200px}
+.papers{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.paper{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.paper.core{border-color:var(--jade);box-shadow:inset 0 0 0 1px var(--jade)}
+.paper .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:.76rem var(--mono);color:var(--muted)}
+.tag{font:600 .7rem var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:3px 7px;border-radius:4px;background:var(--jade-soft);color:var(--jade)}
+.tag.found{background:var(--bamboo-soft);color:var(--bamboo)}
+.tag.other{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.paper p{font-size:.92rem}
+.paper h3 a{color:var(--ink);text-decoration:none}
+.paper h3 a:hover{text-decoration:underline}
+/* architecture */
+.arch svg{width:100%;height:auto;display:block}
+.arch .node rect{fill:var(--surface);stroke:var(--line);stroke-width:1.5;cursor:pointer}
+.arch .node text{fill:var(--ink);font:600 13px var(--body);pointer-events:none}
+.arch .node .sub{fill:var(--muted);font:11px var(--mono)}
+.arch .node.on rect{fill:var(--jade-soft);stroke:var(--jade);stroke-width:2}
+.arch .node:focus{outline:none}.arch .node:focus-visible rect{stroke:var(--jade);stroke-width:3}
+.arch .edge{stroke:var(--muted);stroke-width:1.5;fill:none}
+.arch .edge.fb{stroke:var(--bamboo);stroke-dasharray:5 4}
+.arch .lbl{fill:var(--muted);font:11px var(--mono)}
+.arch .lbl.fb{fill:var(--bamboo)}
+.detail h3{margin-bottom:6px}
+.detail ul{margin:8px 0 0;padding-left:18px;font-size:.93rem}
+.detail li+li{margin-top:4px}
+/* controls */
+.ctrl{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:.9rem}
+.ctrl label{color:var(--muted)}
+.ctrl output{font:600 .85rem var(--mono);min-width:4.5ch;text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--jade)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button.b{font:600 .88rem var(--body);padding:8px 14px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer}
+button.b.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+/* MCTS */
+.tree{display:grid;gap:8px}
+.kid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.kid.pick{border-color:var(--jade);background:var(--jade-soft)}
+.kid code{overflow-wrap:anywhere}
+.kid .nums{font:.78rem var(--mono);color:var(--muted);font-variant-numeric:tabular-nums;grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 14px}
+.kid .uct{font:700 .95rem var(--mono);font-variant-numeric:tabular-nums;color:var(--jade)}
+.bar{height:6px;border-radius:3px;background:var(--line);grid-column:1/-1;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--jade)}
+.log{font:.78rem/1.5 var(--mono);color:var(--muted);max-height:7.5em;overflow:auto}
+/* FSA */
+.genes{display:flex;flex-wrap:wrap;gap:6px}
+.gene{font:.78rem var(--mono);overflow-wrap:anywhere;max-width:100%;padding:4px 8px;border-radius:5px;border:1px solid var(--line);background:var(--bg)}
+.gene.ban{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.gene b{font-weight:600;margin-left:6px}
+.repo,.cands{display:grid;gap:6px;font:.8rem var(--mono)}
+.repo div,.cands div{padding:6px 8px;border-radius:6px;background:var(--bg);overflow-wrap:anywhere}
+.cands div{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.cands .rej{background:var(--bad-soft);color:var(--bad)}
+.cands .ok{background:var(--jade-soft)}
+.cands span{flex:none;font-weight:600}
+/* metrics */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg)}
+.stat small{display:block;font:600 .7rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat b{font:700 1.3rem var(--display);font-variant-numeric:tabular-nums}
+.chart svg{width:100%;height:auto;display:block}
+.chart .ax{stroke:var(--line)}
+.chart text{fill:var(--muted);font:10px var(--mono)}
+.toggle{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--muted)}
+.toggle input{accent-color:var(--jade);width:16px;height:16px}
+/* setup + glossary */
+.spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.spec div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.spec dt{font:600 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.spec dd{margin:4px 0 0;font-weight:600}
+dl{margin:0}
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.gloss details{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.gloss summary{cursor:pointer;font-weight:600}
+.gloss p{margin-top:6px;font-size:.92rem;color:var(--muted)}
+footer{padding-top:28px;border-top:1px solid var(--line);font-size:.85rem;color:var(--muted);display:grid;gap:6px}
+/* agora + schema */
+.claims{grid-template-columns:1fr 1fr}
+.roles{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:r}
+.roles li{counter-increment:r;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);cursor:pointer}
+.roles li::before{content:counter(r);grid-row:span 2;font:700 .9rem var(--mono);color:var(--muted);align-self:center;width:1.4em;text-align:center}
+.roles li b{font-weight:600}
+.roles li span{font-size:.86rem;color:var(--muted)}
+.roles li.on{border-color:var(--jade);background:var(--jade-soft)}
+.roles li.on::before{color:var(--jade)}
+.roles li:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.84rem;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.plan{display:grid;gap:10px}
+.field{display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:10px;align-items:center;font-size:.9rem}
+.field>span{font:600 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);min-width:0;width:100%}
+.quals{display:flex;flex-wrap:wrap;gap:6px}
+.quals label{font-size:.84rem;border:1px solid var(--line);border-radius:999px;padding:4px 10px;cursor:pointer;display:flex;gap:6px;align-items:center}
+.quals input{accent-color:var(--jade);margin:0}
+.planout{font:.82rem/1.6 var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-wrap:anywhere}
+.planout .k{color:var(--muted)}
+.planout .code{color:var(--jade);display:block;margin-top:6px}
+.heat{overflow-x:auto}
+.heat table{table-layout:fixed;border-collapse:separate;border-spacing:3px;font:.72rem var(--mono);width:100%;min-width:340px}
+.heat th{color:var(--muted);font-weight:600;text-align:left;padding:2px 4px;white-space:nowrap}
+.heat td{height:30px;border-radius:4px;text-align:center;color:var(--ink);font-variant-numeric:tabular-nums}
+@media (max-width:820px){header.hero,.bench{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<nav class="top" aria-label="Sections"><div class="in">
+  <a href="#papers">Papers</a><a href="#loop">CQ2 loop</a><a href="#mcts">MCTS search</a><a href="#fsa">Subtree avoidance</a><a href="#metrics">IC &amp; drawdown</a><a href="#setup">CQ2 setup</a><a href="#agora">Agora</a><a href="#schema">AlphaSchema</a><a href="#glossary">Glossary</a>
+</div></nav>
+
+<div class="wrap">
+<header class="hero">
+  <div>
+    <div class="eyebrow">Panda AI · Li Yuqi (李昱琦) et al. · 2023–2026</div>
+    <h1>PandaAI Research Atlas</h1>
+    <p class="lede">Panda AI's research team, led by founder Li Yuqi, published three arXiv papers on AI quant research in 2026. <b>CQ2</b> builds a closed-loop LLM agent that mines alpha formulas. <b>Agora</b> lets agents evolve the scoring metrics along with the alphas. <b>AlphaSchema</b> plans each factor's trading logic before any code is written. This page lays out the papers and lets you try each mechanism on simulated data.</p>
+  </div>
+  <div class="claims" aria-label="Headline claims">
+    <div class="claim"><b>+18.2%</b><span>CQ2: Rank IC vs. best time-series baseline (CSI 300)</span></div>
+    <div class="claim dd"><b>−25.7%</b><span>CQ2: maximum drawdown vs. the same baselines</span></div>
+    <div class="claim"><b>+1.87</b><span>Agora: Sharpe on a 91-day 2026 holdout (CSI 1000)</span></div>
+    <div class="claim dd"><b>5</b><span>AlphaSchema: fields in every factor plan (event to output)</span></div>
+    <p class="claimnote">Authors' own figures. None has been independently reproduced. The Agora result is from a single run (one random seed).</p>
+  </div>
+</header>
+
+<section id="papers">
+  <div class="sechead">
+    <div class="eyebrow">Reading list</div>
+    <h2>Papers</h2>
+    <p>Three papers come from the Panda AI team. Li Yuqi's earlier journal and conference papers (not on arXiv) are listed too. The team's papers build on an LLM + MCTS factor-mining paper from Tsinghua's IIIS and sit among a fast-growing set of LLM alpha-mining work. Many unrelated papers also use the name PANDA; they're listed separately so you don't mix them up.</p>
+  </div>
+  <div class="filters">
+    <button class="chip" data-f="all" aria-pressed="true">All</button>
+    <button class="chip" data-f="core" aria-pressed="false">Panda AI team</button>
+    <button class="chip" data-f="early" aria-pressed="false">Li Yuqi, earlier work</button>
+    <button class="chip" data-f="found" aria-pressed="false">Foundation</button>
+    <button class="chip" data-f="related" aria-pressed="false">Related alpha mining</button>
+    <button class="chip" data-f="other" aria-pressed="false">Other "PANDA" (unrelated)</button>
+    <input type="search" id="q" placeholder="Search titles and notes" aria-label="Search papers">
+  </div>
+  <div class="papers" id="paperList"></div>
+</section>
+
+<section id="loop">
+  <div class="sechead">
+    <div class="eyebrow">Architecture</div>
+    <h2>CQ2: the closed loop</h2>
+    <p>PandaAI wraps the LLM in modules that check and correct it. Select a module to see what it does. Solid arrows carry data forward. Dashed arrows are the feedback that closes the loop.</p>
+  </div>
+  <div class="bench">
+    <div class="panel arch">
+      <svg viewBox="0 0 520 400" role="group" aria-label="PandaAI module diagram" id="archSvg"></svg>
+    </div>
+    <div class="panel detail" id="archDetail" aria-live="polite"></div>
+  </div>
+</section>
+
+<section id="mcts">
+  <div class="sechead">
+    <div class="eyebrow">Alpha Research Module</div>
+    <h2>LLM-guided Monte Carlo Tree Search</h2>
+    <p>Each tree node is an alpha formula. The LLM proposes refinements, a backtest scores them, and the search uses UCT to decide which branch to refine next. UCT trades off a branch's average score (exploit) against how rarely it has been tried (explore). Raise <i>c</i> to explore more.</p>
+  </div>
+  <div class="bench">
+    <div class="panel stack">
+      <div class="ctrl"><label for="cSl">Exploration <i>c</i></label><input type="range" id="cSl" min="0" max="3" step="0.05" value="1.4"><output id="cOut">1.40</output></div>
+      <p class="mono" style="font-size:.85rem">UCT = Q/N + c·√(ln N<sub>parent</sub> / N)</p>
+      <div class="btns">
+        <button class="b" id="step1">Run 1 iteration</button>
+        <button class="b ghost" id="step20">Run 20</button>
+        <button class="b ghost" id="resetM">Reset</button>
+      </div>
+      <div class="log" id="mlog" aria-live="polite"></div>
+      <p class="note">Simulated. Each branch has a hidden true quality, and each backtest returns that quality plus noise. Watch how a low <i>c</i> can lock onto a lucky early branch.</p>
+    </div>
+    <div class="panel"><div class="tree" id="tree"></div></div>
+  </div>
+</section>
+
+<section id="fsa">
+  <div class="sechead">
+    <div class="eyebrow">Diversity control</div>
+    <h2>Frequent Subtree Avoidance</h2>
+    <p>Left alone, an LLM keeps proposing the same building blocks. Frequent Subtree Avoidance (from <i>Navigating the Alpha Jungle</i>) finds the most common <b>root genes</b> in the formula library and bans them from new proposals. A root gene is a subtree whose leaves are all raw features, compared with window sizes stripped out.</p>
+  </div>
+  <div class="bench">
+    <div class="panel stack">
+      <h3>Formula library</h3>
+      <div class="repo" id="repo"></div>
+      <div class="ctrl"><label for="kSl">Ban top-<i>k</i> genes</label><input type="range" id="kSl" min="0" max="5" step="1" value="2"><output id="kOut">2</output></div>
+    </div>
+    <div class="panel stack">
+      <h3>Root-gene frequency</h3>
+      <div class="genes" id="genes"></div>
+      <div class="btns"><button class="b" id="gen">Propose 6 candidates</button><button class="b ghost" id="admit">Admit accepted ones</button><button class="b ghost" id="resetF">Reset</button></div>
+      <div class="cands" id="cands"></div>
+      <div class="stats"><div class="stat"><small>Unique genes</small><b id="uniq">0</b></div><div class="stat"><small>Top gene share</small><b id="topShare">0%</b></div></div>
+      <p class="note">Candidates here are random, standing in for LLM proposals. Rejected ones contain a banned gene. Set <i>k</i> to 0 and admit a few rounds to watch the top gene's share climb.</p>
+    </div>
+  </div>
+</section>
+
+<section id="metrics">
+  <div class="sechead">
+    <div class="eyebrow">How results are scored</div>
+    <h2>IC, Rank IC, ICIR and drawdown</h2>
+    <p>The paper's claims are in these units. IC is the daily correlation between a factor's values and next-period returns across stocks. Rank IC uses ranks, so a few extreme returns can't dominate it. ICIR is mean IC divided by its standard deviation, a measure of consistency. Drawdown is the worst peak-to-trough fall of the long-short portfolio.</p>
+  </div>
+  <div class="bench">
+    <div class="panel stack">
+      <div class="ctrl"><label for="sSl">Signal strength</label><input type="range" id="sSl" min="0" max="0.3" step="0.01" value="0.12"><output id="sOut">0.12</output></div>
+      <div class="ctrl"><label for="pSl">Factor persistence</label><input type="range" id="pSl" min="0" max="0.98" step="0.02" value="0.8"><output id="pOut">0.80</output></div>
+      <div class="ctrl"><label for="rSl">Regime decay</label><input type="range" id="rSl" min="0" max="1" step="0.05" value="0.6"><output id="rOut">0.60</output></div>
+      <label class="toggle"><input type="checkbox" id="tails" checked> Fat-tailed returns (outlier days)</label>
+      <label class="toggle"><input type="checkbox" id="costs" checked> Charge 20 bps per unit turnover (15 commission + 5 slippage)</label>
+      <p class="note">Simulated 300-stock universe over 250 trading days. In the second half a high-volatility regime begins, and the factor's signal shrinks by the regime-decay amount. This is the failure a regime model is meant to catch. Low persistence means more turnover, so costs eat more of the return.</p>
+    </div>
+    <div class="panel stack">
+      <div class="stats">
+        <div class="stat"><small>Mean IC</small><b id="mIC">–</b></div>
+        <div class="stat"><small>Mean Rank IC</small><b id="mRIC">–</b></div>
+        <div class="stat"><small>ICIR</small><b id="mIR">–</b></div>
+        <div class="stat"><small>Ann. return</small><b id="mAR">–</b></div>
+        <div class="stat"><small>Max drawdown</small><b id="mDD">–</b></div>
+      </div>
+      <div class="chart" id="icChart"></div>
+      <div class="chart" id="eqChart"></div>
+    </div>
+  </div>
+</section>
+
+<section id="setup">
+  <div class="sechead">
+    <div class="eyebrow">From the paper</div>
+    <h2>CQ2 experiment setup</h2>
+    <p>Details as reported in the arXiv HTML version. I couldn't open the full results table, so per-baseline numbers aren't shown here.</p>
+  </div>
+  <dl class="spec">
+    <div><dt>Universe</dt><dd>CSI 300 (China A-shares)</dd></div>
+    <div><dt>Input</dt><dd>60-day lookback of OHLCV</dd></div>
+    <div><dt>Target</dt><dd>5-day forward return, cross-sectionally standardized</dd></div>
+    <div><dt>Costs</dt><dd>15 bps commission + 5 bps slippage</dd></div>
+    <div><dt>Rebalancing</dt><dd>Daily, turnover capped at 50%</dd></div>
+    <div><dt>Baselines named</dt><dd>LSTM, Transformer (time-series models)</dd></div>
+    <div><dt>Metrics</dt><dd>IC, Rank IC, ICIR, annual return, max drawdown</dd></div>
+    <div><dt>Regime state</dt><dd><span class="mono">z<sub>t</sub></span>, continuous latent (volatility, liquidity)</dd></div>
+  </dl>
+</section>
+
+<section id="agora">
+  <div class="sechead">
+    <div class="eyebrow">arXiv 2606.29194 · Sealed Joint Search (SJS)</div>
+    <h2>Agora: evolve the scorer, not just the alphas</h2>
+    <p>Most alpha miners search hard against a fixed scoring metric. Agora's authors argue that this fixed scorer causes the gap between in-sample and out-of-sample results: the search learns to please the metric, not the market. Agora's Sealed Joint Search lets scoring functions and factors co-evolve under constraints on which agents can see which information. An evaluation-miner agent keeps changing the metric library while the alpha-miner searches. Select a role to see what it does in each round.</p>
+  </div>
+  <div class="bench">
+    <div class="panel stack">
+      <h3>One round, in order</h3>
+      <ol class="roles" id="roles"></ol>
+      <dl class="spec" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
+        <div><dt>Universe</dt><dd>CSI 1000</dd></div>
+        <div><dt>Rounds</dt><dd>100</dd></div>
+        <div><dt>Seed metrics</dt><dd>4 built-in</dd></div>
+        <div><dt>Plumbing</dt><dd>9 clients · 8 skill stores · 3 channels</dd></div>
+      </dl>
+    </div>
+    <div class="panel stack">
+      <h3>Toy model: fixed vs. co-evolving scorer</h3>
+      <div class="ctrl"><label for="opSl">Overfit pull</label><input type="range" id="opSl" min="0" max="0.06" step="0.005" value="0.03"><output id="opOut">0.030</output></div>
+      <div class="ctrl"><label for="evSl">Metric learning speed</label><input type="range" id="evSl" min="0" max="0.2" step="0.01" value="0.06"><output id="evOut">0.06</output></div>
+      <div class="legend"><span>Holdout quality by search round (1 to 100)</span><span><i style="background:var(--bad)"></i>Fixed scorer, holdout</span><span><i style="background:var(--jade)"></i>Co-evolving scorer, holdout</span><span><i style="background:var(--muted)"></i>Fixed scorer, in-sample</span></div>
+      <div class="chart" id="agChart"></div>
+      <p class="note">Toy model on synthetic data. Each alpha has real skill plus an overfit part that only helps in-sample. Search finds overfit gains easier to come by (the overfit pull). The fixed scorer can't tell the two apart. The co-evolving scorer gradually learns metrics that discount the overfit part. In Agora this happens through LLM agents, not a formula.</p>
+      <div class="stats">
+        <div class="stat"><small>Agora holdout</small><b>+1.87</b></div>
+        <div class="stat"><small>Best baseline, lucky seed</small><b>+1.33</b></div>
+        <div class="stat"><small>Best baseline, seed mean</small><b>−0.76</b></div>
+        <div class="stat"><small>Frozen library recovers</small><b>+0.40 of 2.25</b></div>
+      </div>
+      <p class="note">Reported Sharpe ratios, 91-day 2026 holdout. Loading Agora's two discovered metrics into a frozen library recovers only +0.40 of the +2.25 Sharpe gap. Adding PPO without library evolution makes the gap worse. Caveats from the authors: single seed, and most of the signal comes from the short side.</p>
+    </div>
+  </div>
+</section>
+
+<section id="schema">
+  <div class="sechead">
+    <div class="eyebrow">arXiv 2607.26642 · with Tsinghua IIIS</div>
+    <h2>AlphaSchema: plan the trade, then write the code</h2>
+    <p>In most LLM miners, the agent decides both what to try and how to code it, so exploration is hard to steer. AlphaSchema splits the two. Every candidate first becomes a <b>schema plan</b> of five fields. A surrogate model scores plans, the search picks a batch of 16, and only then does an LLM turn each plan into a factor. Backtest rewards retrain the surrogate.</p>
+  </div>
+  <div class="bench">
+    <div class="panel stack">
+      <h3>Build a schema plan</h3>
+      <div class="plan">
+        <label class="field"><span>Event</span><select id="pE"></select></label>
+        <label class="field"><span>Context</span><select id="pC"></select></label>
+        <div class="field"><span>Qualities</span><div class="quals" id="pQ"></div></div>
+        <label class="field"><span>Direction</span><select id="pD"></select></label>
+        <label class="field"><span>Output</span><select id="pO"></select></label>
+      </div>
+      <div class="planout" id="planOut" aria-live="polite"></div>
+      <p class="note">Context and Output options follow the paper's examples. The events, qualities and code are examples I wrote, so the plan-to-code step here is a sketch of what the LLM would do.</p>
+    </div>
+    <div class="panel stack">
+      <h3>Surrogate-guided search</h3>
+      <div class="ctrl"><label for="xSl">Global exploration</label><input type="range" id="xSl" min="0" max="1" step="0.05" value="0.3"><output id="xOut">30%</output></div>
+      <div class="ctrl"><label for="mSl">Local mutation</label><input type="range" id="mSl" min="0" max="1" step="0.05" value="0.3"><output id="mOut">30%</output></div>
+      <p style="font-size:.85rem;color:var(--muted)">Surrogate-guided exploitation takes the remaining share: <b id="eOut">40%</b>.</p>
+      <div class="btns"><button class="b" id="sRun">Run 1 batch (16 plans)</button><button class="b ghost" id="sRun10">Run 10 batches</button><button class="b ghost" id="sReset">Reset</button></div>
+      <div class="stats">
+        <div class="stat"><small>Plans tested</small><b id="sN">0</b></div>
+        <div class="stat"><small>Best reward</small><b id="sBest">–</b></div>
+        <div class="stat"><small>Random search best</small><b id="sRand">–</b></div>
+      </div>
+      <div class="heat" id="heat"></div>
+      <p class="note">Simulated. Each plan has a hidden reward made of per-field effects plus Event×Context and Event×Direction interactions. Cells count the evaluations per Event×Context pair, with darker meaning more. The surrogate here is a simple per-field average, standing in for the paper's gradient-boosted trees. The random-search column gets the same number of tries.</p>
+    </div>
+  </div>
+</section>
+
+<section id="glossary">
+  <div class="sechead"><div class="eyebrow">Terms</div><h2>Glossary</h2></div>
+  <div class="gloss" id="gloss"></div>
+</section>
+
+<footer>
+  <p>Built from arXiv listings, the preprints' HTML versions, a Pith review, interviews with Li Yuqi (Tencent News, 21jingji), a TQX research slide and secondary summaries found by web search. This environment's network blocked direct arXiv access, so the full PDF wasn't read. Check numbers against the paper before relying on them.</p>
+  <p>Simulations on this page use synthetic data and a fixed random seed. They illustrate the mechanisms. They don't reproduce the paper's results.</p>
+</footer>
+</div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- papers ---------- */
+const P=[
+ {id:"2606.06823",kind:"core",date:"5 Jun 2026",title:"PandaAI: A Practical Agent CQ2 for Neuro-symbolic Data Analysis And Integrated Decision-Making in Quantitative Finance",auth:"Yuqi Li, Siyuan Liu, Bingjun Liu (Panda AI)",note:"CQ2. Closed-loop neuro-symbolic agent: market-state perception, constraint-driven factor generation, and dual-loop adaptive evolution. A fine-tuned finance LLM drives LLM-guided constrained MCTS, and backtest feedback updates the constraints. Reports +18.2% Rank IC and −25.7% max drawdown vs. time-series SOTA on CSI 300."},
+ {id:"2606.29194",kind:"core",date:"28 Jun 2026",title:"AI Trading's Alpha Singularity: Emergent Market Reasoning through Agent-to-Agent Self-Evolution",auth:"Yuqi Li, Siyuan Liu, Bingjun Liu (Panda AI)",note:"Agora, built on a framework called Sealed Joint Search (SJS). Five agent roles evolve the metric library together with the alphas, instead of scoring against a fixed metric. Reports +1.87 holdout Sharpe on CSI 1000 over 91 days of 2026. Single seed; signal concentrated on the short side."},
+ {id:"2607.26642",kind:"core",date:"29 Jul 2026",title:"AlphaSchema: Exploring the Space of Trading Semantics for LLM-Based Alpha Mining",auth:"Jingyang Yi, Jian Yang, Yifei Jin, Yuqi Li, Jian Li (X-Tech, Xtech-PandaAI-Waton Joint Lab, Monash, PandaAI, Tsinghua IIIS)",note:"Each factor starts as a schema plan (Event, Context, Qualities, Direction, Output). A surrogate model learns which plans pay off and steers the search. The LLM only writes code for plans that are selected. Tested on CSI 300 and CSI 500."},
+ {id:"",doi:"",kind:"early",date:"2026 · EI Compendex",title:"Research on high-frequency financial transaction behavior recognition and prediction method integrating machine learning",auth:"Yuqi Li",note:"Uses machine learning to recognize and predict trading behavior in high-frequency transaction data. Venue listed only as EI Compendex indexed."},
+ {id:"",doi:"10.2478/amns-2024-1237",kind:"early",date:"2024 · AMNS 9(1)",title:"Fusion of multifactor modeling and supervised learning algorithms in quantitative finance: a comparative analysis of predictive and explanatory power",auth:"Yuqi Li",note:"Compares classic multifactor models with supervised-learning models on how well they predict returns and how well they explain them. Published in Applied Mathematics and Nonlinear Sciences."},
+ {id:"",doi:"10.54254/2754-1169/56/20231055",kind:"early",date:"2023 · ICFTBA",title:"The impact of systemic financial risks on the Shanghai Composite Index: evidence from an ARIMA model",auth:"Yuqi Li",note:"Time-series (ARIMA) study of how systemic financial risk feeds into the Shanghai Composite. Proc. 2nd Intl. Conf. on Financial Technology and Business Analysis, vol. 56, p. 1055."},
+ {id:"2505.11122",kind:"found",date:"May 2025 · AAAI",title:"Navigating the Alpha Jungle: An LLM-Powered MCTS Framework for Formulaic Factor Mining",auth:"Yu Shi, Yitong Duan, Jian Li",note:"Source of the LLM + MCTS search that CQ2's Alpha Research Module builds on. Jian Li of Tsinghua IIIS, who is probably the same Jian Li, co-authors AlphaSchema with Li Yuqi. Backtest scores steer the tree; Frequent Subtree Avoidance bans common root genes to keep formulas diverse."},
+ {id:"2502.16789",kind:"related",date:"Feb 2025",title:"AlphaAgent: LLM-Driven Alpha Mining with Regularized Exploration to Counteract Alpha Decay",auth:"",note:"Regularizes LLM exploration so mined factors resist alpha decay."},
+ {id:"2602.07085",kind:"related",date:"Feb 2026",title:"QuantaAlpha: An Evolutionary Framework for LLM-Driven Alpha Mining",auth:"",note:"Evolutionary strategies over LLM-proposed factors with self-evolving research trajectories."},
+ {id:"2607.08332",kind:"related",date:"Jul 2026",title:"XALPHA: A Memory-Driven AI Quant Researcher for Hypothesis-to-Code Alpha Discovery",auth:"",note:"Turns research hypotheses into factor code, with memory across iterations."},
+ {id:"2608.11250",kind:"related",date:"Aug 2026",title:"AgonAlpha: Autonomous Alpha Discovery via Prompt Economy and Scalable Agentic Search",auth:"",note:"Scales agentic factor search under a prompt budget."},
+ {id:"2608.30192",kind:"related",date:"Aug 2026",title:"FaVOR: LLM-Based Agentic Framework for Factor Mining via Empirical Validation",auth:"",note:"Agentic factor mining gated by empirical validation."},
+ {id:"2608.31041",kind:"related",date:"Aug 2026",title:"Agentic Quantitative Trading: A Survey of Workflows, Systems, and Evaluation",auth:"",note:"Survey of agentic quant systems. Good map of where PandaAI fits."},
+ {id:"2609.29014",kind:"related",date:"Sep 2026",title:"AlphaDiverse: Post-Training Local Quantitative Research Agents for Diverse Exploration in Alpha Factor Mining",auth:"",note:"Post-trains local models to explore more diverse factors, the same goal FSA targets."},
+ {id:"1804.09997",kind:"other",date:"Apr 2018",title:"PANDA: Facilitating Usable AI Development",auth:"",note:"Platform for non-ML domain experts (e.g. clinicians) to build AI apps. Unrelated to PandaAI quant."},
+ {id:"2305.03025",kind:"other",date:"May 2023",title:"Panda LLM: Training Data and Evaluation for Open-Sourced Chinese Instruction-Following LLMs",auth:"",note:"Chinese instruction-tuned LLMs. Unrelated."},
+ {id:"2208.10160",kind:"other",date:"Aug 2022",title:"PANDA: Prompt Transfer Meets Knowledge Distillation for Efficient Model Adaptation",auth:"",note:"Prompt transfer for NLP. Unrelated."},
+ {id:"2402.12835",kind:"other",date:"Feb 2024",title:"PANDA: Preference Adaptation for Enhancing Domain-Specific Abilities of LLMs",auth:"",note:"Domain adaptation of LLMs. Unrelated."},
+ {id:"2406.03671",kind:"other",date:"Jun 2024",title:"PANDA: Expanded Width-Aware Message Passing Beyond Rewiring",auth:"",note:"Graph neural networks. Unrelated."},
+ {id:"2505.13755",kind:"other",date:"May 2025",title:"Panda: A pretrained forecast model for chaotic dynamics",auth:"",note:"Time-series foundation model for chaotic systems. Unrelated, though forecasting-adjacent."},
+ {id:"2509.26386",kind:"other",date:"Sep 2025 · NeurIPS",title:"PANDA: Towards Generalist Video Anomaly Detection via Agentic AI Engineer",auth:"",note:"Agentic video anomaly detection. Unrelated."},
+ {id:"2511.10481",kind:"other",date:"Nov 2025",title:"Panda: Test-Time Adaptation with Negative Data Augmentation",auth:"",note:"Vision test-time adaptation. Unrelated."},
+ {id:"2512.01324",kind:"other",date:"Dec 2025",title:"Panda: Self-distillation of Reusable Sensor-level Representations for High Energy Physics",auth:"",note:"Particle physics. Unrelated."}
+];
+const tagTxt={early:"Li Yuqi",core:"Panda AI",found:"Foundation",related:"Related",other:"Name only"};
+let filt="all";
+function drawPapers(){
+  const q=$("#q").value.trim().toLowerCase();
+  const list=P.filter(p=>(filt==="all"||p.kind===filt)&&(!q||(p.title+p.note+p.auth+p.id+(p.doi||"")).toLowerCase().includes(q)));
+  $("#paperList").innerHTML=list.length?list.map(p=>`<article class="paper ${p.kind==="core"?"core":""}">
+   <div class="meta"><span class="tag ${p.kind==="found"||p.kind==="early"?"found":p.kind==="other"?"other":""}">${tagTxt[p.kind]}</span><span>${p.id?"arXiv "+p.id:p.doi?"DOI "+esc(p.doi):"Not on arXiv"}</span><span>${esc(p.date)}</span></div>
+   <h3>${p.id||p.doi?`<a href="${p.id?"https://arxiv.org/abs/"+p.id:"https://doi.org/"+p.doi}" target="_blank" rel="noopener">${esc(p.title)}</a>`:esc(p.title)}</h3>
+   ${p.auth?`<div class="meta">${esc(p.auth)}</div>`:""}
+   <p>${esc(p.note)}</p></article>`).join(""):`<p>No papers match “${esc(q)}”.</p>`;
+}
+document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+  filt=c.dataset.f;document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===c));drawPapers();}));
+$("#q").addEventListener("input",drawPapers);drawPapers();
+
+/* ---------- architecture ---------- */
+const N=[
+ {k:"data",x:20,y:30,t:"Market data",s:"OHLCV · 60d",h:"Market data",d:"Daily open, high, low, close and volume for CSI 300 stocks over a 60-day window.",b:["Raw input for both the regime model and the factor formulas.","Low signal-to-noise and non-stationary, which is the paper's stated reason pure deep learning struggles."]},
+ {k:"regime",x:280,y:30,t:"Market Dynamics",s:"regime z_t",h:"Market Dynamics Module",d:"Infers a continuous latent regime state z_t that captures conditions such as volatility and liquidity.",b:["Lets the agent condition its search and decisions on the current market state.","A factor that works in calm markets may fail in stressed ones. The regime state makes that visible."]},
+ {k:"llm",x:280,y:150,t:"CQ2 finance LLM",s:"fine-tuned",h:"CQ2 domain LLM",d:"A domain-specific, fine-tuned LLM that proposes and refines formulaic alpha factors.",b:["Bridges general language reasoning and financial rigor.","Its raw outputs can be 'financially toxic' (look-ahead, nonsense formulas, overfit). The rest of the loop exists to contain that."]},
+ {k:"mcts",x:280,y:270,t:"Alpha Research",s:"constrained MCTS",h:"Alpha Research Module",d:"LLM-guided Monte Carlo Tree Search over alpha formulas, with financial hard constraints enforced during generation.",b:["Each node is a formula, and backtest scores steer which branch is refined next.","Frequent Subtree Avoidance keeps proposals from collapsing onto the same building blocks.","See the MCTS and FSA sections below to try both."]},
+ {k:"bt",x:20,y:270,t:"Backtest & execution",s:"IC · costs · DD",h:"Backtest & execution",d:"Scores each candidate on IC, Rank IC, ICIR, return and drawdown, with transaction costs and a turnover cap.",b:["15 bps commission and 5 bps slippage, daily rebalance, turnover capped at 50%.","Outputs execution diagnostics as well as returns."]},
+ {k:"upd",x:20,y:150,t:"Update operator",s:"evidence bundle",h:"Update operator",d:"Collects backtest results and execution diagnostics into an evidence bundle, then updates symbolic constraints and model parameters.",b:["This is what makes the loop closed: failures change the rules for the next round.","The paper's ablation reports that removing the fast feedback path lowers the quality of mined alphas."]}
+];
+const W=210,H=62;
+const E=[["data","regime","",0],["regime","llm","z_t",0],["llm","mcts","proposals",0],["mcts","bt","candidates",0],["bt","upd","evidence",1],["upd","llm","constraints",1]];
+const svg=$("#archSvg");const ns="http://www.w3.org/2000/svg";
+const ctr=n=>({x:n.x+W/2,y:n.y+H/2});
+const byK=Object.fromEntries(N.map(n=>[n.k,n]));
+let g=`<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>`;
+E.forEach(([a,b,l,fb])=>{
+  const A=byK[a],B=byK[b];let x1,y1,x2,y2;
+  if(A.y===B.y){x1=A.x<B.x?A.x+W:A.x;x2=A.x<B.x?B.x:B.x+W;y1=y2=A.y+H/2;}
+  else if(A.x===B.x){x1=x2=A.x+W/2;y1=A.y<B.y?A.y+H:A.y;y2=A.y<B.y?B.y:B.y+H;}
+  else{y1=y2=A.y+H/2;x1=A.x<B.x?A.x+W:A.x;x2=A.x<B.x?B.x:B.x+W;}
+  const col=fb?"var(--bamboo)":"var(--muted)";
+  g+=`<line class="edge ${fb?"fb":""}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" style="color:${col}" marker-end="url(#ah)"/>`;
+  if(l){const mx=(x1+x2)/2,my=(y1+y2)/2;const vert=x1===x2;g+=`<text class="lbl ${fb?"fb":""}" x="${vert?mx+8:mx}" y="${vert?my+4:my-7}" text-anchor="${vert?"start":"middle"}">${l}</text>`;}
+});
+N.forEach(n=>{g+=`<g class="node" data-k="${n.k}" tabindex="0" role="button" aria-label="${n.h}"><rect x="${n.x}" y="${n.y}" width="${W}" height="${H}" rx="9"/><text x="${n.x+14}" y="${n.y+27}">${n.t}</text><text class="sub" x="${n.x+14}" y="${n.y+46}">${n.s}</text></g>`;});
+svg.innerHTML=g;
+function selNode(k){const n=byK[k];svg.querySelectorAll(".node").forEach(e=>e.classList.toggle("on",e.dataset.k===k));
+  $("#archDetail").innerHTML=`<div class="eyebrow">Module</div><h3>${n.h}</h3><p>${n.d}</p><ul>${n.b.map(x=>`<li>${x}</li>`).join("")}</ul>`;}
+svg.querySelectorAll(".node").forEach(e=>{e.addEventListener("click",()=>selNode(e.dataset.k));e.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();selNode(e.dataset.k);}});});
+selNode("mcts");
+
+/* ---------- seeded RNG ---------- */
+function rng(seed){let s=seed>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+const gauss=r=>{let u=0,v=0;while(!u)u=r();while(!v)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+
+/* ---------- MCTS ---------- */
+const KIDS=[
+ ["Rank(Ts_Mean($close,5)/$close)",0.032],
+ ["Ts_Corr($close,$volume,10)",0.018],
+ ["($close-$open)/($high-$low+1e-3)",0.025],
+ ["-Ts_Std($close/Ts_Delay($close,1)-1,20)",0.040]
+];
+let M,mr;
+function resetM(){mr=rng(7);M={N:0,kids:KIDS.map(([f,q])=>({f,q,n:0,w:0})),log:[]};drawM();}
+const cv=()=>+$("#cSl").value;
+function uct(k,c){if(!k.n)return Infinity;return k.w/k.n+c*Math.sqrt(Math.log(Math.max(M.N,1))/k.n);}
+function stepM(){const c=cv();let best=null,bv=-Infinity;M.kids.forEach(k=>{const u=uct(k,c);if(u>bv){bv=u;best=k;}});
+  const r=best.q+0.03*gauss(mr);best.n++;best.w+=r;M.N++;
+  M.log.unshift(`#${M.N} refine ${best.f.slice(0,28)}${best.f.length>28?"…":""} → Rank IC ${r.toFixed(3)}`);if(M.log.length>40)M.log.pop();}
+function drawM(){const c=cv();let pick=null,bv=-Infinity;M.kids.forEach(k=>{const u=uct(k,c);if(u>bv){bv=u;pick=k;}});
+  const maxN=Math.max(1,...M.kids.map(k=>k.n));
+  $("#tree").innerHTML=`<div class="eyebrow">Root · ${M.N} visits · next pick highlighted</div>`+M.kids.map(k=>{const u=uct(k,c);
+   return `<div class="kid ${k===pick?"pick":""}"><code>${esc(k.f)}</code><span class="uct">${u===Infinity?"∞":u.toFixed(3)}</span>
+   <div class="nums"><span>N ${k.n}</span><span>Q/N ${k.n?(k.w/k.n).toFixed(3):"–"}</span><span>hidden true ${k.q.toFixed(3)}</span></div>
+   <div class="bar"><i style="width:${(k.n/maxN*100).toFixed(1)}%"></i></div></div>`;}).join("");
+  $("#mlog").innerHTML=M.log.length?M.log.map(esc).join("<br>"):"Unvisited branches score ∞ so each gets tried once first.";
+  $("#cOut").textContent=c.toFixed(2);}
+$("#cSl").addEventListener("input",drawM);
+$("#step1").addEventListener("click",()=>{stepM();drawM();});
+$("#step20").addEventListener("click",()=>{for(let i=0;i<20;i++)stepM();drawM();});
+$("#resetM").addEventListener("click",resetM);resetM();
+
+/* ---------- FSA ---------- */
+const F=v=>({f:v}),O=(op,args,p)=>({op,args,p});
+const FEATS=["$close","$open","$high","$low","$volume","$vwap"];
+const SEED=[
+ O("Div",[O("Ts_Mean",[F("$close")],5),F("$close")]),
+ O("Div",[O("Ts_Mean",[F("$close")],20),F("$close")]),
+ O("Ts_Corr",[F("$close"),F("$volume")],10),
+ O("Rank",[O("Div",[O("Ts_Mean",[F("$close")],10),F("$close")])]),
+ O("Div",[O("Sub",[F("$close"),F("$open")]),O("Sub",[F("$high"),F("$low")])]),
+ O("Neg",[O("Ts_Std",[O("Div",[F("$close"),O("Ts_Delay",[F("$close")],1)])],20)]),
+ O("Mul",[O("Div",[O("Ts_Mean",[F("$close")],5),F("$close")]),O("Rank",[F("$volume")])])
+];
+const isFeat=n=>!!n.f;
+const allFeat=n=>isFeat(n)||n.args.every(allFeat);
+const str=n=>isFeat(n)?n.f:`${n.op}(${n.args.map(str).join(",")}${n.p!=null?","+n.p:""})`;
+const gstr=n=>isFeat(n)?n.f:`${n.op}(${n.args.map(gstr).join(",")}${n.p!=null?",·":""})`;
+function genes(n,parentRoot,out){ // maximal root genes: all-feature subtrees whose parent is not one
+  if(isFeat(n))return out;const me=allFeat(n);
+  if(me&&!parentRoot)out.push(gstr(n));
+  n.args.forEach(a=>genes(a,me,out));return out;}
+let fr,REPO,CANDS;
+function resetF(){fr=rng(11);REPO=SEED.slice();CANDS=[];drawF();}
+const pick=a=>a[Math.floor(fr()*a.length)];
+function randNode(d){
+  if(d<=0||fr()<0.25)return F(pick(FEATS));
+  const ops=[["Ts_Mean",1,[5,10,20]],["Ts_Std",1,[10,20]],["Ts_Delay",1,[1,5]],["Rank",1,null],["Neg",1,null],["Ts_Corr",2,[10,20]],["Div",2,null],["Sub",2,null],["Mul",2,null]];
+  const [op,ar,ps]=pick(ops);const args=[];for(let i=0;i<ar;i++)args.push(randNode(d-1));
+  // bias toward familiar blocks, as an LLM would
+  if(fr()<0.45)return O("Div",[O("Ts_Mean",[F("$close")],pick([5,10,20,60])),F("$close")]);
+  return O(op,args,ps?pick(ps):null);}
+function counts(){const m=new Map();REPO.forEach(n=>new Set(genes(n,false,[])).forEach(gn=>m.set(gn,(m.get(gn)||0)+1)));return [...m.entries()].sort((a,b)=>b[1]-a[1]);}
+function drawF(){const k=+$("#kSl").value;$("#kOut").textContent=k;const cs=counts();const banned=new Set(cs.slice(0,k).map(x=>x[0]));
+  $("#repo").innerHTML=REPO.map(n=>`<div>${esc(str(n))}</div>`).join("");
+  $("#genes").innerHTML=cs.map(([gn,c])=>`<span class="gene ${banned.has(gn)?"ban":""}">${esc(gn)}<b>×${c}</b></span>`).join("");
+  CANDS.forEach(c=>{c.ok=!genes(c.n,false,[]).some(gn=>banned.has(gn));});
+  $("#cands").innerHTML=CANDS.map(c=>`<div class="${c.ok?"ok":"rej"}"><code>${esc(str(c.n))}</code><span>${c.ok?"accept":"reject"}</span></div>`).join("");
+  $("#uniq").textContent=cs.length;
+  const tot=cs.reduce((s,x)=>s+x[1],0);$("#topShare").textContent=tot?Math.round(cs[0][1]/tot*100)+"%":"0%";}
+$("#kSl").addEventListener("input",drawF);
+$("#gen").addEventListener("click",()=>{CANDS=[];for(let i=0;i<6;i++){const r=randNode(3);CANDS.push({n:isFeat(r)?O("Rank",[r]):r});}drawF();});
+$("#admit").addEventListener("click",()=>{CANDS.filter(c=>c.ok).forEach(c=>REPO.push(c.n));CANDS=[];drawF();});
+$("#resetF").addEventListener("click",resetF);resetF();
+
+/* ---------- metrics sim ---------- */
+const NS=300,T=250;
+function pearson(a,b){const n=a.length;let ma=0,mb=0;for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];}ma/=n;mb/=n;let s=0,va=0,vb=0;for(let i=0;i<n;i++){const x=a[i]-ma,y=b[i]-mb;s+=x*y;va+=x*x;vb+=y*y;}return s/Math.sqrt(va*vb||1);}
+function ranks(a){const idx=a.map((v,i)=>[v,i]).sort((x,y)=>x[0]-y[0]);const r=new Array(a.length);idx.forEach(([,i],k)=>r[i]=k);return r;}
+function sim(){
+  const s=+$("#sSl").value,rho=+$("#pSl").value,dec=+$("#rSl").value,tails=$("#tails").checked,costs=$("#costs").checked;
+  const r=rng(42);let f=Array.from({length:NS},()=>gauss(r));const q=Math.floor(NS*0.2);
+  let prevL=new Set(),prevS=new Set();const ic=[],ric=[],eq=[];let v=1;
+  for(let t=0;t<T;t++){
+    const hi=t>=T/2,vol=hi?0.03:0.018,str=s*(hi?1-dec:1);
+    const ret=f.map(x=>{let e=gauss(r);if(tails&&r()<0.02)e*=8;return 0.01*str*x+vol*e;});
+    ic.push(pearson(f,ret));ric.push(pearson(ranks(f),ranks(ret)));
+    const ord=f.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]);const L=new Set(ord.slice(0,q).map(x=>x[1])),S=new Set(ord.slice(-q).map(x=>x[1]));
+    let pnl=0;L.forEach(i=>pnl+=ret[i]/q);S.forEach(i=>pnl-=ret[i]/q);pnl/=2;
+    if(costs&&t>0){let ch=0;L.forEach(i=>{if(!prevL.has(i))ch++;});S.forEach(i=>{if(!prevS.has(i))ch++;});pnl-=(ch/(2*q))*0.0020;}
+    prevL=L;prevS=S;v*=1+pnl;eq.push(v);
+    f=f.map(x=>rho*x+Math.sqrt(1-rho*rho)*gauss(r));
+  }
+  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length,sd=a=>{const m=mean(a);return Math.sqrt(mean(a.map(x=>(x-m)**2)));};
+  let pk=1,dd=0;eq.forEach(x=>{pk=Math.max(pk,x);dd=Math.min(dd,x/pk-1);});
+  const ar=Math.pow(eq[T-1],252/T)-1;
+  $("#mIC").textContent=mean(ic).toFixed(3);$("#mRIC").textContent=mean(ric).toFixed(3);
+  $("#mIR").textContent=(mean(ric)/sd(ric)).toFixed(2);$("#mAR").textContent=(ar*100).toFixed(1)+"%";$("#mDD").textContent=(dd*100).toFixed(1)+"%";
+  $("#sOut").textContent=s.toFixed(2);$("#pOut").textContent=rho.toFixed(2);$("#rOut").textContent=dec.toFixed(2);
+  drawIC(ric);drawEq(eq);
+}
+function drawIC(a){const w=560,h=150,pl=40,pr=8,pt=18,pb=20;const m=Math.max(0.15,...a.map(Math.abs));
+  const y=v=>pt+(h-pt-pb)/2-(v/m)*(h-pt-pb)/2,bw=(w-pl-pr)/a.length;
+  let s=`<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Daily Rank IC bars"><text x="${pl}" y="11">Daily Rank IC (green ≥ 0, red &lt; 0)</text>`;
+  [m,0,-m].forEach(v=>{s+=`<line class="ax" x1="${pl}" x2="${w-pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-4}" y="${y(v)+3}" text-anchor="end">${v.toFixed(2)}</text>`;});
+  const mid=pl+(w-pl-pr)/2;s+=`<line x1="${mid}" x2="${mid}" y1="${pt}" y2="${h-pb}" stroke="var(--bamboo)" stroke-dasharray="3 3"/><text x="${mid+4}" y="${h-6}" style="fill:var(--bamboo)">high-vol regime →</text>`;
+  a.forEach((v,i)=>{const y0=y(0),y1=y(v);s+=`<rect x="${(pl+i*bw).toFixed(2)}" y="${Math.min(y0,y1).toFixed(2)}" width="${Math.max(bw-0.4,0.6).toFixed(2)}" height="${Math.abs(y1-y0).toFixed(2)}" fill="${v>=0?"var(--good)":"var(--bad)"}"/>`;});
+  $("#icChart").innerHTML=s+"</svg>";}
+function drawEq(a){const w=560,h=170,pl=40,pr=8,pt=18,pb=20;const lo=Math.min(...a,1),hi=Math.max(...a,1);const pad=(hi-lo)*0.08||0.01;const L=lo-pad,H=hi+pad;
+  const x=i=>pl+i*(w-pl-pr)/(a.length-1),y=v=>pt+(H-v)/(H-L)*(h-pt-pb);
+  let s=`<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Long-short equity curve"><text x="${pl}" y="11">Long-short equity, starting at 1.00 (shaded: drawdown)</text>`;
+  [H,1,L].forEach(v=>{s+=`<line class="ax" x1="${pl}" x2="${w-pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-4}" y="${y(v)+3}" text-anchor="end">${v.toFixed(2)}</text>`;});
+  let pk=a[0],dp="";const pkArr=a.map(v=>pk=Math.max(pk,v));
+  dp=`M${x(0)},${y(pkArr[0])}`+pkArr.map((v,i)=>`L${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("")+a.map((v,i)=>[i,v]).reverse().map(([i,v])=>`L${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("")+"Z";
+  s+=`<path d="${dp}" fill="var(--bad-soft)"/>`;
+  s+=`<path d="M${a.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("L")}" fill="none" stroke="var(--jade)" stroke-width="2"/>`;
+  s+=`<circle cx="${x(a.length-1)}" cy="${y(a[a.length-1])}" r="3.5" fill="var(--jade)"/>`;
+  $("#eqChart").innerHTML=s+"</svg>";}
+["#sSl","#pSl","#rSl","#tails","#costs"].forEach(id=>$(id).addEventListener("input",sim));sim();
+
+/* ---------- Agora ---------- */
+const ROLES=[
+ ["Research-report agent","Writes a market research note that frames what the round should look for."],
+ ["Alpha-miner","Proposes and refines alpha formulas, using the AlphaGen operator vocabulary and Maskable PPO tooling."],
+ ["Alpha-evaluator panel","Scores the new alphas against the current metric library."],
+ ["Evaluation-miner","Proposes changes to the metric library itself: new metrics, edits, removals. This is what makes the scorer evolve."],
+ ["Factor-metrics-evaluator panel","Reviews the backtest and decides which metric changes to keep for the next round."]
+];
+let roleOn=3; // Evaluation-miner is the novel role
+function drawRoles(){$("#roles").innerHTML=ROLES.map(([t,d],i)=>`<li tabindex="0" role="button" class="${i===roleOn?"on":""}" data-i="${i}"><b>${t}</b><span>${d}</span></li>`).join("");
+  $("#roles").querySelectorAll("li").forEach(li=>{const go=()=>{roleOn=+li.dataset.i;drawRoles();$("#roles").querySelector(".on").focus();};li.addEventListener("click",go);li.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});});}
+drawRoles();
+function agoraRun(){
+  const pull=+$("#opSl").value,spd=+$("#evSl").value,R=100;
+  const run=(evolve)=>{const r=rng(5);let cur={s:0,o:0};const ho=[],ins=[];
+    for(let t=0;t<R;t++){const w=evolve?Math.max(-0.6,1-spd*t):1;let best=null,bv=-Infinity;
+      for(let k=0;k<8;k++){const c={s:cur.s+0.03*gauss(r)+0.004,o:Math.max(0,cur.o+pull+0.03*gauss(r))};const v=c.s+w*c.o;if(v>bv){bv=v;best=c;}}
+      if(best.s+w*best.o>cur.s+w*cur.o)cur=best;ho.push(cur.s-0.8*cur.o);ins.push(cur.s+cur.o);}
+    return {ho,ins};};
+  const F=run(false),C=run(true);
+  $("#opOut").textContent=pull.toFixed(3);$("#evOut").textContent=spd.toFixed(2);
+  const w=560,h=200,pl=40,pr=8,pt=12,pb=22;const all=[...F.ho,...C.ho,...F.ins];const lo=Math.min(0,...all),hi=Math.max(...all);const pad=(hi-lo)*0.06||0.1,L=lo-pad,H=hi+pad;
+  const x=i=>pl+i*(w-pl-pr)/(R-1),y=v=>pt+(H-v)/(H-L)*(h-pt-pb);const path=a=>"M"+a.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("L");
+  let g=`<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Holdout quality over 100 rounds">`;
+  [H,0,L].forEach(v=>{g+=`<line class="ax" x1="${pl}" x2="${w-pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-4}" y="${y(v)+3}" text-anchor="end">${v.toFixed(1)}</text>`;});
+  [0,25,50,75,99].forEach(i=>{g+=`<text x="${x(i)}" y="${h-6}" text-anchor="middle">${i+1}</text>`;});
+  g+=`<path d="${path(F.ins)}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  g+=`<path d="${path(F.ho)}" fill="none" stroke="var(--bad)" stroke-width="2"/><path d="${path(C.ho)}" fill="none" stroke="var(--jade)" stroke-width="2"/>`;
+  g+=`<circle cx="${x(R-1)}" cy="${y(F.ho[R-1])}" r="3.5" fill="var(--bad)"/><circle cx="${x(R-1)}" cy="${y(C.ho[R-1])}" r="3.5" fill="var(--jade)"/>`;
+  $("#agChart").innerHTML=g+"</svg>";
+}
+["#opSl","#evSl"].forEach(id=>$(id).addEventListener("input",agoraRun));agoraRun();
+
+/* ---------- AlphaSchema ---------- */
+const SC={
+ E:[["vol","Volume spike (3× 20-day average)"],["gap","Opening gap above 2%"],["hi","New 20-day high"],["rev","Intraday reversal"],["drop","Three down days in a row"]],
+ C:[["ext","Near a recent extreme"],["vwap","In the VWAP region"],["regime","High-volatility regime"],["quant","Top cross-sectional quintile"],["none","No context filter"]],
+ Q:[["vconf","Volume confirms"],["closehi","Close near the day's high"],["liq","Liquid names only"],["sect","Sector moves the same way"]],
+ D:[["cont","Continuation"],["rev","Reversal"]],
+ O:[["score","Continuous score"],["decay","Event decay"],["rank","Cross-sectional rank"]]
+};
+const CODE={
+ E:{vol:"$volume/Ts_Mean($volume,20)>3",gap:"$open/Ts_Delay($close,1)-1>0.02",hi:"$close>=Ts_Max($high,20)",rev:"Sign($close-$open)!=Sign($open-Ts_Delay($close,1))",drop:"Ts_Sum($close<Ts_Delay($close,1),3)==3"},
+ C:{ext:"Abs($close/Ts_Max($high,60)-1)<0.03",vwap:"Abs($close/$vwap-1)<0.005",regime:"Ts_Std(Ret($close),20)>Ts_Mean(Ts_Std(Ret($close),20),120)",quant:"Rank(Ret($close,5))>0.8",none:""},
+ Q:{vconf:"$volume>Ts_Mean($volume,5)",closehi:"($close-$low)/($high-$low+1e-6)>0.8",liq:"Rank(Ts_Mean($amount,20))>0.3",sect:"Sign(SectorRet)==Sign(Ret($close))"},
+ O:{score:"Ret($close,5)",decay:"Decay_Linear(event,10)",rank:"Rank(Ret($close,5))"}
+};
+const opt=(arr,id)=>{$(id).innerHTML=arr.map(([k,t])=>`<option value="${k}">${t}</option>`).join("");};
+opt(SC.E,"#pE");opt(SC.C,"#pC");opt(SC.D,"#pD");opt(SC.O,"#pO");
+$("#pE").value="vol";$("#pC").value="ext";$("#pD").value="rev";$("#pO").value="decay";
+$("#pQ").innerHTML=SC.Q.map(([k,t])=>`<label><input type="checkbox" id="q_${k}" value="${k}" ${k==="closehi"?"checked":""}>${t}</label>`).join("");
+function drawPlan(){
+  const qs=[...$("#pQ").querySelectorAll("input:checked")].map(i=>i.value);
+  $("#pQ").querySelectorAll("input").forEach(i=>{i.disabled=!i.checked&&qs.length>=3;});
+  const lab=(arr,k)=>arr.find(a=>a[0]===k)[1];
+  const e=$("#pE").value,c=$("#pC").value,d=$("#pD").value,o=$("#pO").value;
+  const cond=[CODE.E[e],CODE.C[c],...qs.map(q=>CODE.Q[q])].filter(Boolean).join(" && ");
+  const sign=d==="rev"?"-":"";
+  let code=o==="decay"?`${sign}Decay_Linear(If(${cond},1,0),10)`:`If(${cond}, ${sign}${CODE.O[o]}, 0)`;
+  $("#planOut").innerHTML=`<span class="k">p = (e, c, Q, d, o)</span><br><span class="k">e</span> ${esc(lab(SC.E,e))}<br><span class="k">c</span> ${esc(lab(SC.C,c))}<br><span class="k">Q</span> ${qs.length?qs.map(q=>esc(lab(SC.Q,q))).join("; "):"(none)"}<br><span class="k">d</span> ${esc(lab(SC.D,d))}<br><span class="k">o</span> ${esc(lab(SC.O,o))}<span class="code">${esc(code)}</span>`;
+}
+["#pE","#pC","#pD","#pO"].forEach(id=>$(id).addEventListener("change",drawPlan));$("#pQ").addEventListener("change",drawPlan);drawPlan();
+
+// hidden reward over the plan space
+const nE=5,nC=5,nQ=4,nD=2,nO=3;
+const hr=rng(99);const g0=n=>Array.from({length:n},()=>gauss(hr));
+const fx={E:g0(nE),C:g0(nC),Q:g0(nQ),D:g0(nD),O:g0(nO),EC:Array.from({length:nE},()=>g0(nC)),ED:Array.from({length:nE},()=>g0(nD))};
+fx.EC[2][0]+=2.6;fx.EC[2][3]+=1.8;fx.ED[2][0]+=1.2;fx.EC[3][1]+=2.0;fx.ED[3][1]+=1.4;
+function trueR(p){let v=0.4*fx.E[p.e]+0.4*fx.C[p.c]+0.25*fx.D[p.d]+0.2*fx.O[p.o]+0.9*fx.EC[p.e][p.c]+0.6*fx.ED[p.e][p.d];
+  p.q.forEach((b,i)=>{if(b)v+=0.2*fx.Q[i];});return 0.02+0.008*v;}
+let SS;
+function sReset(){SS={r:rng(3),rr:rng(4),hist:[],rand:[],cnt:Array.from({length:nE},()=>Array(nC).fill(0))};drawSearch();}
+function randPlan(r){const q=[0,0,0,0];let n=Math.floor(r()*4);while(n-->0)q[Math.floor(r()*nQ)]=1;return {e:Math.floor(r()*nE),c:Math.floor(r()*nC),d:Math.floor(r()*nD),o:Math.floor(r()*nO),q};}
+function mutate(p,r){const c={...p,q:p.q.slice()};const f=Math.floor(r()*5);
+  if(f===0)c.e=Math.floor(r()*nE);else if(f===1)c.c=Math.floor(r()*nC);else if(f===2)c.d=1-c.d;else if(f===3)c.o=Math.floor(r()*nO);else{const i=Math.floor(r()*nQ);c.q[i]=1-c.q[i];}return c;}
+function surrogate(){ // per-field averages of observed reward, plus Event×Context cell average
+  const H=SS.hist,m=H.length?H.reduce((s,h)=>s+h.y,0)/H.length:0.02;
+  const avg=(f)=>{const acc={};H.forEach(h=>{const k=f(h.p);(acc[k]=acc[k]||[0,0]);acc[k][0]+=h.y-m;acc[k][1]++;});return k=>acc[k]?acc[k][0]/(acc[k][1]+1):0;};
+  const aE=avg(p=>p.e),aC=avg(p=>p.c),aD=avg(p=>p.d),aO=avg(p=>p.o),aEC=avg(p=>p.e+"_"+p.c),aED=avg(p=>p.e+"_"+p.d);
+  return p=>m+0.5*(aE(p.e)+aC(p.c)+aD(p.d)+aO(p.o))+aEC(p.e+"_"+p.c)+0.5*aED(p.e+"_"+p.d);}
+function sBatch(){
+  const x=+$("#xSl").value,mu=+$("#mSl").value,r=SS.r;const sur=surrogate();
+  const top=SS.hist.slice().sort((a,b)=>b.y-a.y).slice(0,4);
+  for(let i=0;i<16;i++){const u=r();let p;
+    if(!SS.hist.length||u<x)p=randPlan(r);
+    else if(u<x+mu&&top.length)p=mutate(top[Math.floor(r()*top.length)].p,r);
+    else{let best=null,bv=-Infinity;for(let k=0;k<60;k++){const c=randPlan(r);const v=sur(c);if(v>bv){bv=v;best=c;}}p=best;}
+    const y=trueR(p)+0.004*gauss(r);SS.hist.push({p,y});SS.cnt[p.e][p.c]++;
+    const rp=randPlan(SS.rr);SS.rand.push(trueR(rp)+0.004*gauss(SS.rr));}
+}
+function drawSearch(){
+  const x=+$("#xSl").value,mu=+$("#mSl").value;$("#xOut").textContent=Math.round(x*100)+"%";$("#mOut").textContent=Math.round(mu*100)+"%";
+  $("#eOut").textContent=Math.max(0,Math.round((1-x-mu)*100))+"%";
+  $("#sN").textContent=SS.hist.length;
+  $("#sBest").textContent=SS.hist.length?Math.max(...SS.hist.map(h=>h.y)).toFixed(3):"–";
+  $("#sRand").textContent=SS.rand.length?Math.max(...SS.rand).toFixed(3):"–";
+  const mx=Math.max(1,...SS.cnt.flat());const short=["Near extreme","VWAP","High vol","Top quintile","None"];
+  const eShort=["Vol spike","Gap open","20d high","Reversal","3 down days"];
+  let t=`<table><thead><tr><th></th>${short.map(s=>`<th>${s}</th>`).join("")}</tr></thead><tbody>`;
+  SS.cnt.forEach((row,i)=>{t+=`<tr><th>${eShort[i]}</th>${row.map(v=>`<td style="background:color-mix(in srgb,var(--jade) ${Math.round(v/mx*85)}%,var(--bg))${v/mx>0.55?";color:var(--surface)":""}">${v||""}</td>`).join("")}</tr>`;});
+  $("#heat").innerHTML=t+"</tbody></table>";
+}
+$("#xSl").addEventListener("input",()=>{if(+$("#xSl").value+ +$("#mSl").value>1)$("#mSl").value=(1-$("#xSl").value).toFixed(2);drawSearch();});
+$("#mSl").addEventListener("input",()=>{if(+$("#xSl").value+ +$("#mSl").value>1)$("#xSl").value=(1-$("#mSl").value).toFixed(2);drawSearch();});
+$("#sRun").addEventListener("click",()=>{sBatch();drawSearch();});
+$("#sRun10").addEventListener("click",()=>{for(let i=0;i<10;i++)sBatch();drawSearch();});
+$("#sReset").addEventListener("click",sReset);sReset();
+
+/* ---------- glossary ---------- */
+const G=[
+ ["Alpha factor","A formula that scores each stock, such that higher scores should predict higher future returns. Example: Ts_Mean($close,5)/$close (short-term reversal)."],
+ ["Formulaic alpha","An alpha written as an explicit expression of operators over raw features. Easy to read and audit, unlike a neural-net prediction."],
+ ["Neuro-symbolic","Combining neural models (the LLM) with symbolic machinery (formulas, hard constraints, search trees) that can be checked exactly."],
+ ["Financial toxicity","The paper's term for harmful LLM output in finance: look-ahead bias, invalid formulas, overfit or untradeable signals."],
+ ["Market regime (z_t)","A latent state describing current conditions such as volatility and liquidity. The same factor can behave differently across regimes."],
+ ["MCTS","Monte Carlo Tree Search. Repeatedly select a branch by UCT, expand it, evaluate it, and back-propagate the score."],
+ ["UCT","Upper Confidence bound for Trees: average reward plus an exploration bonus that shrinks as a branch is visited more."],
+ ["Root gene","A subtree whose leaves are all raw features (e.g. Ts_Mean($close,·)). Used by FSA to measure structural repetition."],
+ ["IC / Rank IC","Cross-sectional correlation between factor values and forward returns, using raw values (IC) or ranks (Rank IC)."],
+ ["ICIR","Mean IC divided by the standard deviation of IC. Higher means the factor works more consistently day to day."],
+ ["Maximum drawdown","Largest peak-to-trough fall in portfolio value. The paper reports 25.7% lower drawdown than baselines."],
+ ["Schema plan","AlphaSchema's tuple (Event, Context, Qualities, Direction, Output). It states a factor's trading logic before any code exists."],
+ ["Surrogate model","A cheap model that predicts a plan's reward from its fields, so the search can rank plans without backtesting all of them. AlphaSchema uses gradient-boosted trees."],
+ ["Metric library","Agora's evolving set of evaluation functions. It starts with four built-in metrics and changes each round."],
+ ["Sharpe ratio","Annualized return divided by annualized volatility. Agora's headline holdout figure is +1.87."],
+ ["Long-short","Buy the top-scored stocks and short the bottom-scored ones, so market moves largely cancel out."],
+ ["Holdout","Data kept out of all search and tuning and used once, at the end, to check results honestly."],
+ ["CSI 1000 / CSI 500","Indexes of smaller A-shares, ranked below the CSI 300 by size. Agora is tested on CSI 1000 and AlphaSchema on CSI 300 and 500."],
+ ["CSI 300","Index of the 300 largest A-shares listed in Shanghai and Shenzhen. The paper's test universe."]
+];
+$("#gloss").innerHTML=G.map(([t,d])=>`<details><summary>${esc(t)}</summary><p>${esc(d)}</p></details>`).join("");
+})();
+</script>
+</body>
+</html>

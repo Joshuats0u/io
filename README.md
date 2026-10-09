@@ -2,7 +2,7 @@
 
 An interactive dashboard for Panda AI's research papers on arXiv (Li Yuqi / 李昱琦 et al.) and the work around them.
 
-Open `dashboard/pandaai-atlas.html` in a browser. It has no build step and needs no server.
+Download `dashboard/pandaai-atlas-standalone.html` and open it in any browser. It works offline with no server. (`pandaai-atlas.html` is the source published as the Claude artifact.)
 
 ## Papers covered
 
