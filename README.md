@@ -12,6 +12,12 @@ Panda AI team:
 - **Agora: AI Trading's Alpha Singularity: Emergent Market Reasoning through Agent-to-Agent Self-Evolution** (arXiv [2606.29194](https://arxiv.org/abs/2606.29194)), Yuqi Li, Siyuan Liu, Bingjun Liu, June 2026
 - **AlphaSchema: Exploring the Space of Trading Semantics for LLM-Based Alpha Mining** (arXiv [2607.26642](https://arxiv.org/abs/2607.26642)), Jingyang Yi, Jian Yang, Yifei Jin, Yuqi Li, Jian Li, July 2026
 
+Earlier work by Li Yuqi (not on arXiv; from a TQX research slide):
+
+- Research on high-frequency financial transaction behavior recognition and prediction method integrating machine learning (2026, EI Compendex indexed)
+- Fusion of multifactor modeling and supervised learning algorithms in quantitative finance: a comparative analysis of predictive and explanatory power (2024, Applied Mathematics and Nonlinear Sciences 9(1), DOI 10.2478/amns-2024-1237)
+- The impact of systemic financial risks on the Shanghai Composite Index: evidence from an ARIMA model (2023, Proc. 2nd ICFTBA 56:1055, DOI 10.54254/2754-1169/56/20231055)
+
 Background:
 
 - **Navigating the Alpha Jungle: An LLM-Powered MCTS Framework for Formulaic Factor Mining** (arXiv [2505.11122](https://arxiv.org/abs/2505.11122)). This is the search method PandaAI builds on.

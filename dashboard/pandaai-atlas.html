@@ -166,7 +166,7 @@ select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6
 <div class="wrap">
 <header class="hero">
   <div>
-    <div class="eyebrow">Panda AI · Li Yuqi (李昱琦) et al. · three papers, 2026</div>
+    <div class="eyebrow">Panda AI · Li Yuqi (李昱琦) et al. · 2023–2026</div>
     <h1>PandaAI Research Atlas</h1>
     <p class="lede">Panda AI's research team, led by founder Li Yuqi, published three arXiv papers on AI quant research in 2026. <b>CQ2</b> builds a closed-loop LLM agent that mines alpha formulas. <b>Agora</b> lets agents evolve the scoring metrics along with the alphas. <b>AlphaSchema</b> plans each factor's trading logic before any code is written. This page lays out the papers and lets you try each mechanism on simulated data.</p>
   </div>
@@ -183,11 +183,12 @@ select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6
   <div class="sechead">
     <div class="eyebrow">Reading list</div>
     <h2>Papers</h2>
-    <p>Three papers come from the Panda AI team. They build on an LLM + MCTS factor-mining paper from Tsinghua's IIIS and sit among a fast-growing set of LLM alpha-mining work. Many unrelated papers also use the name PANDA; they're listed separately so you don't mix them up.</p>
+    <p>Three papers come from the Panda AI team. Li Yuqi's earlier journal and conference papers (not on arXiv) are listed too. The team's papers build on an LLM + MCTS factor-mining paper from Tsinghua's IIIS and sit among a fast-growing set of LLM alpha-mining work. Many unrelated papers also use the name PANDA; they're listed separately so you don't mix them up.</p>
   </div>
   <div class="filters">
     <button class="chip" data-f="all" aria-pressed="true">All</button>
     <button class="chip" data-f="core" aria-pressed="false">Panda AI team</button>
+    <button class="chip" data-f="early" aria-pressed="false">Li Yuqi, earlier work</button>
     <button class="chip" data-f="found" aria-pressed="false">Foundation</button>
     <button class="chip" data-f="related" aria-pressed="false">Related alpha mining</button>
     <button class="chip" data-f="other" aria-pressed="false">Other "PANDA" (unrelated)</button>
@@ -304,9 +305,9 @@ select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6
 
 <section id="agora">
   <div class="sechead">
-    <div class="eyebrow">arXiv 2606.29194 · Agent-to-Agent self-evolution</div>
+    <div class="eyebrow">arXiv 2606.29194 · Sealed Joint Search (SJS)</div>
     <h2>Agora: evolve the scorer, not just the alphas</h2>
-    <p>Most alpha miners search hard against a fixed scoring metric. Agora's authors argue that this fixed scorer causes the gap between in-sample and out-of-sample results: the search learns to please the metric, not the market. Agora adds an evaluation-miner agent that keeps changing the metric library while the alpha-miner searches. Select a role to see what it does in each round.</p>
+    <p>Most alpha miners search hard against a fixed scoring metric. Agora's authors argue that this fixed scorer causes the gap between in-sample and out-of-sample results: the search learns to please the metric, not the market. Agora's Sealed Joint Search lets scoring functions and factors co-evolve under constraints on which agents can see which information. An evaluation-miner agent keeps changing the metric library while the alpha-miner searches. Select a role to see what it does in each round.</p>
   </div>
   <div class="bench">
     <div class="panel stack">
@@ -379,7 +380,7 @@ select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6
 </section>
 
 <footer>
-  <p>Built from arXiv listings, the preprints' HTML versions, a Pith review, interviews with Li Yuqi (Tencent News, 21jingji) and secondary summaries found by web search. This environment's network blocked direct arXiv access, so the full PDF wasn't read. Check numbers against the paper before relying on them.</p>
+  <p>Built from arXiv listings, the preprints' HTML versions, a Pith review, interviews with Li Yuqi (Tencent News, 21jingji), a TQX research slide and secondary summaries found by web search. This environment's network blocked direct arXiv access, so the full PDF wasn't read. Check numbers against the paper before relying on them.</p>
   <p>Simulations on this page use synthetic data and a fixed random seed. They illustrate the mechanisms. They don't reproduce the paper's results.</p>
 </footer>
 </div>
@@ -391,9 +392,12 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 
 /* ---------- papers ---------- */
 const P=[
- {id:"2606.06823",kind:"core",date:"5 Jun 2026",title:"PandaAI: A Practical Agent CQ2 for Neuro-symbolic Data Analysis And Integrated Decision-Making in Quantitative Finance",auth:"Yuqi Li, Siyuan Liu, Bingjun Liu (Panda AI)",note:"CQ2. Closed-loop neuro-symbolic agent: fine-tuned finance LLM, latent market-regime model, LLM-guided constrained MCTS for alpha generation, and backtest feedback that updates constraints. Reports +18.2% Rank IC and −25.7% max drawdown vs. time-series SOTA on CSI 300."},
- {id:"2606.29194",kind:"core",date:"28 Jun 2026",title:"AI Trading's Alpha Singularity: Emergent Market Reasoning through Agent-to-Agent Self-Evolution",auth:"Yuqi Li, Siyuan Liu, Bingjun Liu (Panda AI)",note:"Agora. Five agent roles evolve the metric library together with the alphas, instead of scoring against a fixed metric. Reports +1.87 holdout Sharpe on CSI 1000 over 91 days of 2026. Single seed; signal concentrated on the short side."},
+ {id:"2606.06823",kind:"core",date:"5 Jun 2026",title:"PandaAI: A Practical Agent CQ2 for Neuro-symbolic Data Analysis And Integrated Decision-Making in Quantitative Finance",auth:"Yuqi Li, Siyuan Liu, Bingjun Liu (Panda AI)",note:"CQ2. Closed-loop neuro-symbolic agent: market-state perception, constraint-driven factor generation, and dual-loop adaptive evolution. A fine-tuned finance LLM drives LLM-guided constrained MCTS, and backtest feedback updates the constraints. Reports +18.2% Rank IC and −25.7% max drawdown vs. time-series SOTA on CSI 300."},
+ {id:"2606.29194",kind:"core",date:"28 Jun 2026",title:"AI Trading's Alpha Singularity: Emergent Market Reasoning through Agent-to-Agent Self-Evolution",auth:"Yuqi Li, Siyuan Liu, Bingjun Liu (Panda AI)",note:"Agora, built on a framework called Sealed Joint Search (SJS). Five agent roles evolve the metric library together with the alphas, instead of scoring against a fixed metric. Reports +1.87 holdout Sharpe on CSI 1000 over 91 days of 2026. Single seed; signal concentrated on the short side."},
  {id:"2607.26642",kind:"core",date:"29 Jul 2026",title:"AlphaSchema: Exploring the Space of Trading Semantics for LLM-Based Alpha Mining",auth:"Jingyang Yi, Jian Yang, Yifei Jin, Yuqi Li, Jian Li (X-Tech, Xtech-PandaAI-Waton Joint Lab, Monash, PandaAI, Tsinghua IIIS)",note:"Each factor starts as a schema plan (Event, Context, Qualities, Direction, Output). A surrogate model learns which plans pay off and steers the search. The LLM only writes code for plans that are selected. Tested on CSI 300 and CSI 500."},
+ {id:"",doi:"",kind:"early",date:"2026 · EI Compendex",title:"Research on high-frequency financial transaction behavior recognition and prediction method integrating machine learning",auth:"Yuqi Li",note:"Uses machine learning to recognize and predict trading behavior in high-frequency transaction data. Venue listed only as EI Compendex indexed."},
+ {id:"",doi:"10.2478/amns-2024-1237",kind:"early",date:"2024 · AMNS 9(1)",title:"Fusion of multifactor modeling and supervised learning algorithms in quantitative finance: a comparative analysis of predictive and explanatory power",auth:"Yuqi Li",note:"Compares classic multifactor models with supervised-learning models on how well they predict returns and how well they explain them. Published in Applied Mathematics and Nonlinear Sciences."},
+ {id:"",doi:"10.54254/2754-1169/56/20231055",kind:"early",date:"2023 · ICFTBA",title:"The impact of systemic financial risks on the Shanghai Composite Index: evidence from an ARIMA model",auth:"Yuqi Li",note:"Time-series (ARIMA) study of how systemic financial risk feeds into the Shanghai Composite. Proc. 2nd Intl. Conf. on Financial Technology and Business Analysis, vol. 56, p. 1055."},
  {id:"2505.11122",kind:"found",date:"May 2025 · AAAI",title:"Navigating the Alpha Jungle: An LLM-Powered MCTS Framework for Formulaic Factor Mining",auth:"Yu Shi, Yitong Duan, Jian Li",note:"Source of the LLM + MCTS search that CQ2's Alpha Research Module builds on. Jian Li of Tsinghua IIIS, who is probably the same Jian Li, co-authors AlphaSchema with Li Yuqi. Backtest scores steer the tree; Frequent Subtree Avoidance bans common root genes to keep formulas diverse."},
  {id:"2502.16789",kind:"related",date:"Feb 2025",title:"AlphaAgent: LLM-Driven Alpha Mining with Regularized Exploration to Counteract Alpha Decay",auth:"",note:"Regularizes LLM exploration so mined factors resist alpha decay."},
  {id:"2602.07085",kind:"related",date:"Feb 2026",title:"QuantaAlpha: An Evolutionary Framework for LLM-Driven Alpha Mining",auth:"",note:"Evolutionary strategies over LLM-proposed factors with self-evolving research trajectories."},
@@ -412,14 +416,14 @@ const P=[
  {id:"2511.10481",kind:"other",date:"Nov 2025",title:"Panda: Test-Time Adaptation with Negative Data Augmentation",auth:"",note:"Vision test-time adaptation. Unrelated."},
  {id:"2512.01324",kind:"other",date:"Dec 2025",title:"Panda: Self-distillation of Reusable Sensor-level Representations for High Energy Physics",auth:"",note:"Particle physics. Unrelated."}
 ];
-const tagTxt={core:"Panda AI",found:"Foundation",related:"Related",other:"Name only"};
+const tagTxt={early:"Li Yuqi",core:"Panda AI",found:"Foundation",related:"Related",other:"Name only"};
 let filt="all";
 function drawPapers(){
   const q=$("#q").value.trim().toLowerCase();
-  const list=P.filter(p=>(filt==="all"||p.kind===filt)&&(!q||(p.title+p.note+p.auth+p.id).toLowerCase().includes(q)));
+  const list=P.filter(p=>(filt==="all"||p.kind===filt)&&(!q||(p.title+p.note+p.auth+p.id+(p.doi||"")).toLowerCase().includes(q)));
   $("#paperList").innerHTML=list.length?list.map(p=>`<article class="paper ${p.kind==="core"?"core":""}">
-   <div class="meta"><span class="tag ${p.kind==="found"?"found":p.kind==="other"?"other":""}">${tagTxt[p.kind]}</span><span>arXiv ${p.id}</span><span>${esc(p.date)}</span></div>
-   <h3><a href="https://arxiv.org/abs/${p.id}" target="_blank" rel="noopener">${esc(p.title)}</a></h3>
+   <div class="meta"><span class="tag ${p.kind==="found"||p.kind==="early"?"found":p.kind==="other"?"other":""}">${tagTxt[p.kind]}</span><span>${p.id?"arXiv "+p.id:p.doi?"DOI "+esc(p.doi):"Not on arXiv"}</span><span>${esc(p.date)}</span></div>
+   <h3>${p.id||p.doi?`<a href="${p.id?"https://arxiv.org/abs/"+p.id:"https://doi.org/"+p.doi}" target="_blank" rel="noopener">${esc(p.title)}</a>`:esc(p.title)}</h3>
    ${p.auth?`<div class="meta">${esc(p.auth)}</div>`:""}
    <p>${esc(p.note)}</p></article>`).join(""):`<p>No papers match “${esc(q)}”.</p>`;
 }
