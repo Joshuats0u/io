@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PandaAI 研究图谱</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;600;800&display=swap">
+<style>
+/* Layout: a research notebook. Sticky section nav, then stacked "lab benches", each pairing a short explainer with a live instrument. */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#15201c; --muted:#5b6a64; --line:#d5ddd9;
+  --jade:#0f7a5c; --jade-soft:#dcefe7; --bamboo:#b5892b; --bamboo-soft:#f5ecd6;
+  --good:#1c7c4a; --bad:#b4372f; --bad-soft:#f6dedb;
+  --display:"Schibsted Grotesk","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  --body:"Source Sans 3","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,"Noto Sans SC","PingFang SC",monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1513; --surface:#17201d; --ink:#e4ece8; --muted:#97a8a1; --line:#2a3833;
+  --jade:#4cc79c; --jade-soft:#173a2f; --bamboo:#ddb459; --bamboo-soft:#3a3020;
+  --good:#5ccf8f; --bad:#ef7b70; --bad-soft:#40211e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1513; --surface:#17201d; --ink:#e4ece8; --muted:#97a8a1; --line:#2a3833;
+  --jade:#4cc79c; --jade-soft:#173a2f; --bamboo:#ddb459; --bamboo-soft:#3a3020;
+  --good:#5ccf8f; --bad:#ef7b70; --bad-soft:#40211e; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--body);margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2rem,5vw,3.1rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.6rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:700}
+p{margin:0;max-width:66ch}
+a{color:var(--jade)}
+code,.mono{font-family:var(--mono);font-size:.86em}
+.eyebrow{font:600 .74rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+nav.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav.top .in{max-width:1120px;margin:0 auto;padding:10px 20px;display:flex;gap:6px;overflow-x:auto}
+nav.top a{flex:none;text-decoration:none;color:var(--muted);font:600 .85rem var(--body);padding:6px 10px;border-radius:6px}
+nav.top a:hover,nav.top a:focus-visible{color:var(--ink);background:var(--surface);outline:none}
+header.hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:32px;padding-block:44px 28px;align-items:end}
+.hero .lede{font-size:1.12rem;color:var(--muted);margin-top:14px}
+.claims{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.claim{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.claim b{display:block;font:800 2rem/1 var(--display);color:var(--jade);font-variant-numeric:tabular-nums}
+.claim.dd b{color:var(--bamboo)}
+.claim span{font-size:.88rem;color:var(--muted)}
+.claimnote{grid-column:1/-1;font-size:.82rem;color:var(--muted)}
+section{padding-block:40px;border-top:1px solid var(--line);display:grid;gap:20px}
+.sechead{display:grid;gap:8px}
+.sechead p{color:var(--muted)}
+.bench{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:24px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
+.stack{display:grid;gap:12px}
+.note{font-size:.86rem;color:var(--muted);border-left:3px solid var(--bamboo);padding-left:10px}
+/* paper list */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:600 .82rem var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+input[type=search]{font:inherit;padding:7px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);min-width:0;flex:1 1 200px}
+.papers{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.paper{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.paper.core{border-color:var(--jade);box-shadow:inset 0 0 0 1px var(--jade)}
+.paper .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:.76rem var(--mono);color:var(--muted)}
+.tag{font:600 .7rem var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:3px 7px;border-radius:4px;background:var(--jade-soft);color:var(--jade)}
+.tag.found{background:var(--bamboo-soft);color:var(--bamboo)}
+.tag.other{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.paper p{font-size:.92rem}
+.paper h3 a{color:var(--ink);text-decoration:none}
+.paper h3 a:hover{text-decoration:underline}
+/* architecture */
+.arch svg{width:100%;height:auto;display:block}
+.arch .node rect{fill:var(--surface);stroke:var(--line);stroke-width:1.5;cursor:pointer}
+.arch .node text{fill:var(--ink);font:600 13px var(--body);pointer-events:none}
+.arch .node .sub{fill:var(--muted);font:11px var(--mono)}
+.arch .node.on rect{fill:var(--jade-soft);stroke:var(--jade);stroke-width:2}
+.arch .node:focus{outline:none}.arch .node:focus-visible rect{stroke:var(--jade);stroke-width:3}
+.arch .edge{stroke:var(--muted);stroke-width:1.5;fill:none}
+.arch .edge.fb{stroke:var(--bamboo);stroke-dasharray:5 4}
+.arch .lbl{fill:var(--muted);font:11px var(--mono)}
+.arch .lbl.fb{fill:var(--bamboo)}
+.detail h3{margin-bottom:6px}
+.detail ul{margin:8px 0 0;padding-left:18px;font-size:.93rem}
+.detail li+li{margin-top:4px}
+/* controls */
+.ctrl{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:.9rem}
+.ctrl label{color:var(--muted)}
+.ctrl output{font:600 .85rem var(--mono);min-width:4.5ch;text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--jade)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button.b{font:600 .88rem var(--body);padding:8px 14px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer}
+button.b.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+/* MCTS */
+.tree{display:grid;gap:8px}
+.kid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.kid.pick{border-color:var(--jade);background:var(--jade-soft)}
+.kid code{overflow-wrap:anywhere}
+.kid .nums{font:.78rem var(--mono);color:var(--muted);font-variant-numeric:tabular-nums;grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 14px}
+.kid .uct{font:700 .95rem var(--mono);font-variant-numeric:tabular-nums;color:var(--jade)}
+.bar{height:6px;border-radius:3px;background:var(--line);grid-column:1/-1;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--jade)}
+.log{font:.78rem/1.5 var(--mono);color:var(--muted);max-height:7.5em;overflow:auto}
+/* FSA */
+.genes{display:flex;flex-wrap:wrap;gap:6px}
+.gene{font:.78rem var(--mono);overflow-wrap:anywhere;max-width:100%;padding:4px 8px;border-radius:5px;border:1px solid var(--line);background:var(--bg)}
+.gene.ban{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.gene b{font-weight:600;margin-left:6px}
+.repo,.cands{display:grid;gap:6px;font:.8rem var(--mono)}
+.repo div,.cands div{padding:6px 8px;border-radius:6px;background:var(--bg);overflow-wrap:anywhere}
+.cands div{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.cands .rej{background:var(--bad-soft);color:var(--bad)}
+.cands .ok{background:var(--jade-soft)}
+.cands span{flex:none;font-weight:600}
+/* metrics */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg)}
+.stat small{display:block;font:600 .7rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat b{font:700 1.3rem var(--display);font-variant-numeric:tabular-nums}
+.chart svg{width:100%;height:auto;display:block}
+.chart .ax{stroke:var(--line)}
+.chart text{fill:var(--muted);font:10px var(--mono)}
+.toggle{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--muted)}
+.toggle input{accent-color:var(--jade);width:16px;height:16px}
+/* setup + glossary */
+.spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.spec div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.spec dt{font:600 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.spec dd{margin:4px 0 0;font-weight:600}
+dl{margin:0}
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.gloss details{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.gloss summary{cursor:pointer;font-weight:600}
+.gloss p{margin-top:6px;font-size:.92rem;color:var(--muted)}
+footer{padding-top:28px;border-top:1px solid var(--line);font-size:.85rem;color:var(--muted);display:grid;gap:6px}
+/* agora + schema */
+.claims{grid-template-columns:1fr 1fr}
+.roles{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:r}
+.roles li{counter-increment:r;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);cursor:pointer}
+.roles li::before{content:counter(r);grid-row:span 2;font:700 .9rem var(--mono);color:var(--muted);align-self:center;width:1.4em;text-align:center}
+.roles li b{font-weight:600}
+.roles li span{font-size:.86rem;color:var(--muted)}
+.roles li.on{border-color:var(--jade);background:var(--jade-soft)}
+.roles li.on::before{color:var(--jade)}
+.roles li:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.84rem;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.plan{display:grid;gap:10px}
+.field{display:grid;grid-template-columns:5.5em minmax(0,1fr);gap:10px;align-items:center;font-size:.9rem}
+.field>span{font:600 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);min-width:0;width:100%}
+.quals{display:flex;flex-wrap:wrap;gap:6px}
+.quals label{font-size:.84rem;border:1px solid var(--line);border-radius:999px;padding:4px 10px;cursor:pointer;display:flex;gap:6px;align-items:center}
+.quals input{accent-color:var(--jade);margin:0}
+.planout{font:.82rem/1.6 var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-wrap:anywhere}
+.planout .k{color:var(--muted)}
+.planout .code{color:var(--jade);display:block;margin-top:6px}
+.heat{overflow-x:auto}
+.heat table{table-layout:fixed;border-collapse:separate;border-spacing:3px;font:.72rem var(--mono);width:100%;min-width:340px}
+.heat th{color:var(--muted);font-weight:600;text-align:left;padding:2px 4px;white-space:nowrap}
+.heat td{height:30px;border-radius:4px;text-align:center;color:var(--ink);font-variant-numeric:tabular-nums}
+@media (max-width:820px){header.hero,.bench{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<nav class="top" aria-label="章节"><div class="in">
+  <a href="#papers">论文</a><a href="#loop">CQ2 闭环</a><a href="#mcts">MCTS 搜索</a><a href="#fsa">子树规避</a><a href="#metrics">IC 与回撤</a><a href="#setup">CQ2 实验设置</a><a href="#agora">Agora</a><a href="#schema">AlphaSchema</a><a href="#glossary">术语表</a>
+</div></nav>
+
+<div class="wrap">
+<header class="hero">
+  <div>
+    <div class="eyebrow">Panda AI · 李昱琦 等 · 2023–2026</div>
+    <h1>PandaAI 研究图谱</h1>
+    <p class="lede">由创始人李昱琦带领的 Panda AI 研究团队在 2026 年发表了三篇关于 AI 量化研究的 arXiv 论文。<b>CQ2</b> 构建了一个挖掘 Alpha 公式的闭环 LLM 智能体。<b>Agora</b> 让智能体在进化 Alpha 的同时进化评价指标。<b>AlphaSchema</b> 在写任何代码之前，先规划每个因子的交易逻辑。本页梳理这些论文，并让你在模拟数据上亲手试验每一种机制。</p>
+  </div>
+  <div class="claims" aria-label="核心结论">
+    <div class="claim"><b>+18.2%</b><span>CQ2：Rank IC 相比最佳时序基线（沪深300）</span></div>
+    <div class="claim dd"><b>−25.7%</b><span>CQ2：最大回撤相比同一组基线</span></div>
+    <div class="claim"><b>+1.87</b><span>Agora：2026 年 91 天留出期夏普比率（中证1000）</span></div>
+    <div class="claim dd"><b>5</b><span>AlphaSchema：每个因子方案的字段数（从事件到输出）</span></div>
+    <p class="claimnote">以上均为作者自报数据，尚无独立复现。Agora 的结果来自单次运行（单一随机种子）。</p>
+  </div>
+</header>
+
+<section id="papers">
+  <div class="sechead">
+    <div class="eyebrow">阅读清单</div>
+    <h2>论文</h2>
+    <p>其中三篇出自 Panda AI 团队，李昱琦早期发表的期刊和会议论文（未上 arXiv）也一并列出。团队的论文建立在清华大学交叉信息研究院一篇 LLM + MCTS 因子挖掘论文的基础上，属于快速增长的 LLM Alpha 挖掘研究方向。另有许多无关论文也叫 PANDA，单独列出，以免混淆。</p>
+  </div>
+  <div class="filters">
+    <button class="chip" data-f="all" aria-pressed="true">全部</button>
+    <button class="chip" data-f="core" aria-pressed="false">Panda AI 团队</button>
+    <button class="chip" data-f="early" aria-pressed="false">李昱琦早期论文</button>
+    <button class="chip" data-f="found" aria-pressed="false">基础工作</button>
+    <button class="chip" data-f="related" aria-pressed="false">相关 Alpha 挖掘</button>
+    <button class="chip" data-f="other" aria-pressed="false">其他同名 PANDA（无关）</button>
+    <input type="search" id="q" placeholder="搜索标题和说明" aria-label="搜索论文">
+  </div>
+  <div class="papers" id="paperList"></div>
+</section>
+
+<section id="loop">
+  <div class="sechead">
+    <div class="eyebrow">架构</div>
+    <h2>CQ2：闭环架构</h2>
+    <p>PandaAI 用一组模块包裹 LLM，对其输出进行检查和纠正。点击模块查看其作用。实线箭头表示数据向前流动，虚线箭头表示形成闭环的反馈。</p>
+  </div>
+  <div class="bench">
+    <div class="panel arch">
+      <svg viewBox="0 0 520 400" role="group" aria-label="PandaAI 模块图" id="archSvg"></svg>
+    </div>
+    <div class="panel detail" id="archDetail" aria-live="polite"></div>
+  </div>
+</section>
+
+<section id="mcts">
+  <div class="sechead">
+    <div class="eyebrow">Alpha 研究模块</div>
+    <h2>LLM 引导的蒙特卡洛树搜索</h2>
+    <p>树上的每个节点是一个 Alpha 公式。LLM 提出改进，回测为其打分，搜索再用 UCT 决定下一步改进哪个分支。UCT 在分支的平均得分（利用）和被尝试的稀少程度（探索）之间权衡。调高 <i>c</i> 会更多地探索。</p>
+  </div>
+  <div class="bench">
+    <div class="panel stack">
+      <div class="ctrl"><label for="cSl">探索系数 <i>c</i></label><input type="range" id="cSl" min="0" max="3" step="0.05" value="1.4"><output id="cOut">1.40</output></div>
+      <p class="mono" style="font-size:.85rem">UCT = Q/N + c·√(ln N<sub>parent</sub> / N)</p>
+      <div class="btns">
+        <button class="b" id="step1">运行 1 次迭代</button>
+        <button class="b ghost" id="step20">运行 20 次</button>
+        <button class="b ghost" id="resetM">重置</button>
+      </div>
+      <div class="log" id="mlog" aria-live="polite"></div>
+      <p class="note">模拟演示。每个分支有一个隐藏的真实质量，每次回测返回该质量加噪声。可以观察到，<i>c</i> 较低时搜索可能锁定在一个早期运气好的分支上。</p>
+    </div>
+    <div class="panel"><div class="tree" id="tree"></div></div>
+  </div>
+</section>
+
+<section id="fsa">
+  <div class="sechead">
+    <div class="eyebrow">多样性控制</div>
+    <h2>频繁子树规避（FSA）</h2>
+    <p>如果不加约束，LLM 会反复提出相同的构件。频繁子树规避（出自 <i>Navigating the Alpha Jungle</i>）找出公式库中最常见的<b>根基因</b>，并禁止新提案使用它们。根基因是叶子全部为原始特征的子树，比较时忽略窗口长度等参数。</p>
+  </div>
+  <div class="bench">
+    <div class="panel stack">
+      <h3>公式库</h3>
+      <div class="repo" id="repo"></div>
+      <div class="ctrl"><label for="kSl">禁用前 <i>k</i> 个基因</label><input type="range" id="kSl" min="0" max="5" step="1" value="2"><output id="kOut">2</output></div>
+    </div>
+    <div class="panel stack">
+      <h3>根基因频次</h3>
+      <div class="genes" id="genes"></div>
+      <div class="btns"><button class="b" id="gen">生成 6 个候选</button><button class="b ghost" id="admit">收录通过的候选</button><button class="b ghost" id="resetF">重置</button></div>
+      <div class="cands" id="cands"></div>
+      <div class="stats"><div class="stat"><small>不同基因数</small><b id="uniq">0</b></div><div class="stat"><small>最常见基因占比</small><b id="topShare">0%</b></div></div>
+      <p class="note">这里的候选公式是随机生成的，用来代替 LLM 的提案。被拒绝的候选包含被禁用的基因。把 <i>k</i> 设为 0 并收录几轮，可以看到最常见基因的占比不断上升。</p>
+    </div>
+  </div>
+</section>
+
+<section id="metrics">
+  <div class="sechead">
+    <div class="eyebrow">结果如何评估</div>
+    <h2>IC、Rank IC、ICIR 与回撤</h2>
+    <p>论文的结论都用这些指标表示。IC 是每天在股票截面上因子值与下一期收益的相关系数。Rank IC 使用排名计算，少数极端收益无法主导结果。ICIR 是 IC 均值除以其标准差，衡量稳定性。回撤是多空组合从峰值到谷底的最大跌幅。</p>
+  </div>
+  <div class="bench">
+    <div class="panel stack">
+      <div class="ctrl"><label for="sSl">信号强度</label><input type="range" id="sSl" min="0" max="0.3" step="0.01" value="0.12"><output id="sOut">0.12</output></div>
+      <div class="ctrl"><label for="pSl">因子持续性</label><input type="range" id="pSl" min="0" max="0.98" step="0.02" value="0.8"><output id="pOut">0.80</output></div>
+      <div class="ctrl"><label for="rSl">状态切换衰减</label><input type="range" id="rSl" min="0" max="1" step="0.05" value="0.6"><output id="rOut">0.60</output></div>
+      <label class="toggle"><input type="checkbox" id="tails" checked> 厚尾收益（含极端交易日）</label>
+      <label class="toggle"><input type="checkbox" id="costs" checked> 每单位换手收取 20 个基点（15 佣金 + 5 滑点）</label>
+      <p class="note">模拟 300 只股票、250 个交易日。后半段进入高波动状态，因子信号按“状态切换衰减”的比例减弱，这正是市场状态模型要捕捉的失效情形。因子持续性越低，换手越高，成本吃掉的收益就越多。</p>
+    </div>
+    <div class="panel stack">
+      <div class="stats">
+        <div class="stat"><small>IC 均值</small><b id="mIC">–</b></div>
+        <div class="stat"><small>Rank IC 均值</small><b id="mRIC">–</b></div>
+        <div class="stat"><small>ICIR</small><b id="mIR">–</b></div>
+        <div class="stat"><small>年化收益</small><b id="mAR">–</b></div>
+        <div class="stat"><small>最大回撤</small><b id="mDD">–</b></div>
+      </div>
+      <div class="chart" id="icChart"></div>
+      <div class="chart" id="eqChart"></div>
+    </div>
+  </div>
+</section>
+
+<section id="setup">
+  <div class="sechead">
+    <div class="eyebrow">论文原文</div>
+    <h2>CQ2 实验设置</h2>
+    <p>以下细节来自 arXiv 的 HTML 版本。由于无法打开完整结果表，这里没有列出各基线的具体数值。</p>
+  </div>
+  <dl class="spec">
+    <div><dt>股票池</dt><dd>沪深300（A 股）</dd></div>
+    <div><dt>输入</dt><dd>回看 60 天的 OHLCV 数据</dd></div>
+    <div><dt>预测目标</dt><dd>未来 5 日收益，截面标准化</dd></div>
+    <div><dt>交易成本</dt><dd>15 个基点佣金 + 5 个基点滑点</dd></div>
+    <div><dt>调仓</dt><dd>每日调仓，换手上限 50%</dd></div>
+    <div><dt>对比基线</dt><dd>LSTM、Transformer（时序模型）</dd></div>
+    <div><dt>评价指标</dt><dd>IC、Rank IC、ICIR、年化收益、最大回撤</dd></div>
+    <div><dt>市场状态</dt><dd><span class="mono">z<sub>t</sub></span>，连续隐变量（波动率、流动性）</dd></div>
+  </dl>
+</section>
+
+<section id="agora">
+  <div class="sechead">
+    <div class="eyebrow">arXiv 2606.29194 · Sealed Joint Search (SJS)</div>
+    <h2>Agora：不只进化 Alpha，也进化评分标准</h2>
+    <p>大多数 Alpha 挖掘系统都对着一个固定的评分指标拼命搜索。Agora 的作者认为，正是这种固定评分造成了样本内外表现的落差：搜索学会的是讨好指标，而不是理解市场。Agora 的封闭联合搜索（SJS）让评分函数和因子在“哪个智能体能看到哪些信息”的约束下共同进化。在 Alpha 挖掘智能体搜索的同时，评价挖掘智能体不断修改指标库。点击某个角色，查看它在每一轮中的作用。</p>
+  </div>
+  <div class="bench">
+    <div class="panel stack">
+      <h3>一轮流程（按顺序）</h3>
+      <ol class="roles" id="roles"></ol>
+      <dl class="spec" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
+        <div><dt>股票池</dt><dd>中证1000</dd></div>
+        <div><dt>轮数</dt><dd>100</dd></div>
+        <div><dt>初始指标</dt><dd>4 个内置指标</dd></div>
+        <div><dt>系统构成</dt><dd>9 个客户端 · 8 个技能库 · 3 个通信通道</dd></div>
+      </dl>
+    </div>
+    <div class="panel stack">
+      <h3>简化模型：固定评分 vs. 共同进化评分</h3>
+      <div class="ctrl"><label for="opSl">过拟合拉力</label><input type="range" id="opSl" min="0" max="0.06" step="0.005" value="0.03"><output id="opOut">0.030</output></div>
+      <div class="ctrl"><label for="evSl">指标学习速度</label><input type="range" id="evSl" min="0" max="0.2" step="0.01" value="0.06"><output id="evOut">0.06</output></div>
+      <div class="legend"><span>各搜索轮次（1 到 100）的留出期质量</span><span><i style="background:var(--bad)"></i>固定评分，留出期</span><span><i style="background:var(--jade)"></i>共同进化评分，留出期</span><span><i style="background:var(--muted)"></i>固定评分，样本内</span></div>
+      <div class="chart" id="agChart"></div>
+      <p class="note">基于合成数据的简化模型。每个 Alpha 由真实能力和只在样本内有效的过拟合部分组成。搜索更容易获得过拟合收益（即“过拟合拉力”）。固定评分无法区分两者，共同进化的评分会逐渐学到能打折过拟合部分的指标。在 Agora 中，这是由 LLM 智能体完成的，而不是一个公式。</p>
+      <div class="stats">
+        <div class="stat"><small>Agora 留出期</small><b>+1.87</b></div>
+        <div class="stat"><small>最佳基线（有利种子）</small><b>+1.33</b></div>
+        <div class="stat"><small>最佳基线（多种子均值）</small><b>−0.76</b></div>
+        <div class="stat"><small>冻结指标库可弥补</small><b>2.25 中的 +0.40</b></div>
+      </div>
+      <p class="note">以上为论文报告的夏普比率，留出期为 2026 年的 91 天。把 Agora 发现的两个指标放进冻结的指标库，只能弥补 +2.25 夏普差距中的 +0.40；只加 PPO 而不进化指标库，差距反而更大。作者自己指出的局限：单一随机种子，且大部分信号来自空头端。</p>
+    </div>
+  </div>
+</section>
+
+<section id="schema">
+  <div class="sechead">
+    <div class="eyebrow">arXiv 2607.26642 · 与清华大学交叉信息研究院合作</div>
+    <h2>AlphaSchema：先规划交易逻辑，再写代码</h2>
+    <p>在大多数 LLM 挖掘系统中，智能体既决定尝试什么，也决定怎么写代码，因此探索过程很难引导。AlphaSchema 把两者分开：每个候选先成为一个由五个字段组成的<b>语义方案（schema plan）</b>，代理模型给方案打分，搜索每批选出 16 个，然后才由 LLM 把每个方案实现成因子。回测得到的奖励再用来重新训练代理模型。</p>
+  </div>
+  <div class="bench">
+    <div class="panel stack">
+      <h3>构建一个语义方案</h3>
+      <div class="plan">
+        <label class="field"><span>事件</span><select id="pE"></select></label>
+        <label class="field"><span>情境</span><select id="pC"></select></label>
+        <div class="field"><span>质量条件</span><div class="quals" id="pQ"></div></div>
+        <label class="field"><span>方向</span><select id="pD"></select></label>
+        <label class="field"><span>输出</span><select id="pO"></select></label>
+      </div>
+      <div class="planout" id="planOut" aria-live="polite"></div>
+      <p class="note">“情境”和“输出”选项沿用论文中的例子。事件、质量条件和代码是自行编写的示例，因此这里从方案到代码的转换只是对 LLM 工作方式的示意。</p>
+    </div>
+    <div class="panel stack">
+      <h3>代理模型引导的搜索</h3>
+      <div class="ctrl"><label for="xSl">全局探索</label><input type="range" id="xSl" min="0" max="1" step="0.05" value="0.3"><output id="xOut">30%</output></div>
+      <div class="ctrl"><label for="mSl">局部变异</label><input type="range" id="mSl" min="0" max="1" step="0.05" value="0.3"><output id="mOut">30%</output></div>
+      <p style="font-size:.85rem;color:var(--muted)">剩余比例用于代理模型引导的利用：<b id="eOut">40%</b>。</p>
+      <div class="btns"><button class="b" id="sRun">运行 1 批（16 个方案）</button><button class="b ghost" id="sRun10">运行 10 批</button><button class="b ghost" id="sReset">重置</button></div>
+      <div class="stats">
+        <div class="stat"><small>已测试方案</small><b id="sN">0</b></div>
+        <div class="stat"><small>最佳奖励</small><b id="sBest">–</b></div>
+        <div class="stat"><small>随机搜索最佳</small><b id="sRand">–</b></div>
+      </div>
+      <div class="heat" id="heat"></div>
+      <p class="note">模拟演示。每个方案的隐藏奖励由各字段的效应加上“事件×情境”和“事件×方向”的交互效应构成。格子里的数字是每组“事件×情境”被评估的次数，颜色越深表示越多。这里的代理模型是简单的按字段平均，用来代替论文中的梯度提升树。“随机搜索最佳”使用相同的尝试次数。</p>
+    </div>
+  </div>
+</section>
+
+<section id="glossary">
+  <div class="sechead"><div class="eyebrow">术语</div><h2>术语表</h2></div>
+  <div class="gloss" id="gloss"></div>
+</section>
+
+<footer>
+  <p>内容来源：arXiv 列表、预印本的 HTML 版本、Pith 评审、李昱琦的专访（腾讯新闻、21财经）、TQX 研究幻灯片，以及网络搜索得到的二手摘要。由于构建环境无法直接访问 arXiv，未能阅读完整 PDF。引用数据前请与原论文核对。</p>
+  <p>本页的模拟均使用合成数据和固定随机种子，用于演示机制，并不复现论文结果。</p>
+</footer>
+</div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- papers ---------- */
+const P=[
+ {id:"2606.06823",kind:"core",date:"2026年6月5日",title:"PandaAI: A Practical Agent CQ2 for Neuro-symbolic Data Analysis And Integrated Decision-Making in Quantitative Finance",auth:"Yuqi Li（李昱琦）, Siyuan Liu, Bingjun Liu（Panda AI）",note:"CQ2。闭环神经符号智能体：市场状态感知、约束驱动的因子生成和双环自适应进化。微调的金融 LLM 驱动带约束的 MCTS 搜索，回测反馈再更新约束。在沪深300上报告 Rank IC 比时序 SOTA 高 18.2%，最大回撤低 25.7%。"},
+ {id:"2606.29194",kind:"core",date:"2026年6月28日",title:"AI Trading's Alpha Singularity: Emergent Market Reasoning through Agent-to-Agent Self-Evolution",auth:"Yuqi Li（李昱琦）, Siyuan Liu, Bingjun Liu（Panda AI）",note:"Agora，基于封闭联合搜索（SJS）框架。五类智能体角色让指标库与 Alpha 一同进化，而不是对着固定指标打分。在中证1000上 2026 年 91 天留出期报告夏普 +1.87。单一种子，信号集中在空头端。"},
+ {id:"2607.26642",kind:"core",date:"2026年7月29日",title:"AlphaSchema: Exploring the Space of Trading Semantics for LLM-Based Alpha Mining",auth:"Jingyang Yi, Jian Yang, Yifei Jin, Yuqi Li（李昱琦）, Jian Li（李建）（X-Tech、Xtech-PandaAI-Waton 联合实验室、莫纳什大学、PandaAI、清华大学交叉信息研究院）",note:"每个因子从一个语义方案开始（事件、情境、质量条件、方向、输出）。代理模型学习哪些方案有效并引导搜索，LLM 只为被选中的方案写代码。在沪深300和中证500上测试。"},
+ {id:"",doi:"",kind:"early",date:"2026 · EI 收录",title:"Research on high-frequency financial transaction behavior recognition and prediction method integrating machine learning",auth:"Yuqi Li（李昱琦）",note:"用机器学习识别和预测高频交易数据中的交易行为。发表渠道仅注明为 EI Compendex 收录。"},
+ {id:"",doi:"10.2478/amns-2024-1237",kind:"early",date:"2024 · AMNS 9(1)",title:"Fusion of multifactor modeling and supervised learning algorithms in quantitative finance: a comparative analysis of predictive and explanatory power",auth:"Yuqi Li（李昱琦）",note:"比较经典多因子模型与监督学习模型在收益预测能力和解释能力上的差异。发表于 Applied Mathematics and Nonlinear Sciences。"},
+ {id:"",doi:"10.54254/2754-1169/56/20231055",kind:"early",date:"2023 · ICFTBA",title:"The impact of systemic financial risks on the Shanghai Composite Index: evidence from an ARIMA model",auth:"Yuqi Li（李昱琦）",note:"用时间序列（ARIMA）模型研究系统性金融风险如何传导至上证综指。第二届金融科技与商业分析国际会议论文集，第 56 卷，第 1055 页。"},
+ {id:"2505.11122",kind:"found",date:"2025年5月 · AAAI",title:"Navigating the Alpha Jungle: An LLM-Powered MCTS Framework for Formulaic Factor Mining",auth:"Yu Shi, Yitong Duan, Jian Li",note:"CQ2 的 Alpha 研究模块所借鉴的 LLM + MCTS 搜索方法的出处。清华大学交叉信息研究院的李建（很可能是同一人）也与李昱琦合著了 AlphaSchema。回测分数引导树搜索，频繁子树规避禁用常见根基因以保持公式多样性。"},
+ {id:"2502.16789",kind:"related",date:"Feb 2025",title:"AlphaAgent: LLM-Driven Alpha Mining with Regularized Exploration to Counteract Alpha Decay",auth:"",note:"对 LLM 的探索加以正则化，使挖出的因子更能抵抗 Alpha 衰减。"},
+ {id:"2602.07085",kind:"related",date:"Feb 2026",title:"QuantaAlpha: An Evolutionary Framework for LLM-Driven Alpha Mining",auth:"",note:"对 LLM 提出的因子使用进化策略，研究轨迹可自我进化。"},
+ {id:"2607.08332",kind:"related",date:"Jul 2026",title:"XALPHA: A Memory-Driven AI Quant Researcher for Hypothesis-to-Code Alpha Discovery",auth:"",note:"把研究假设转化为因子代码，并在迭代之间保留记忆。"},
+ {id:"2608.11250",kind:"related",date:"Aug 2026",title:"AgonAlpha: Autonomous Alpha Discovery via Prompt Economy and Scalable Agentic Search",auth:"",note:"在提示词预算约束下扩展智能体因子搜索。"},
+ {id:"2608.30192",kind:"related",date:"Aug 2026",title:"FaVOR: LLM-Based Agentic Framework for Factor Mining via Empirical Validation",auth:"",note:"以实证验证把关的智能体因子挖掘。"},
+ {id:"2608.31041",kind:"related",date:"Aug 2026",title:"Agentic Quantitative Trading: A Survey of Workflows, Systems, and Evaluation",auth:"",note:"智能体量化系统综述，可用来了解 PandaAI 在整个领域中的位置。"},
+ {id:"2609.29014",kind:"related",date:"Sep 2026",title:"AlphaDiverse: Post-Training Local Quantitative Research Agents for Diverse Exploration in Alpha Factor Mining",auth:"",note:"对本地模型做后训练以探索更多样的因子，与 FSA 的目标相同。"},
+ {id:"1804.09997",kind:"other",date:"Apr 2018",title:"PANDA: Facilitating Usable AI Development",auth:"",note:"帮助非机器学习领域专家（如医生）构建 AI 应用的平台。与 PandaAI 量化无关。"},
+ {id:"2305.03025",kind:"other",date:"May 2023",title:"Panda LLM: Training Data and Evaluation for Open-Sourced Chinese Instruction-Following LLMs",auth:"",note:"中文指令微调大模型。无关。"},
+ {id:"2208.10160",kind:"other",date:"Aug 2022",title:"PANDA: Prompt Transfer Meets Knowledge Distillation for Efficient Model Adaptation",auth:"",note:"NLP 中的提示迁移。无关。"},
+ {id:"2402.12835",kind:"other",date:"Feb 2024",title:"PANDA: Preference Adaptation for Enhancing Domain-Specific Abilities of LLMs",auth:"",note:"大模型的领域适配。无关。"},
+ {id:"2406.03671",kind:"other",date:"Jun 2024",title:"PANDA: Expanded Width-Aware Message Passing Beyond Rewiring",auth:"",note:"图神经网络。无关。"},
+ {id:"2505.13755",kind:"other",date:"May 2025",title:"Panda: A pretrained forecast model for chaotic dynamics",auth:"",note:"面向混沌系统的时序基础模型。无关，但与预测相近。"},
+ {id:"2509.26386",kind:"other",date:"Sep 2025 · NeurIPS",title:"PANDA: Towards Generalist Video Anomaly Detection via Agentic AI Engineer",auth:"",note:"基于智能体的视频异常检测。无关。"},
+ {id:"2511.10481",kind:"other",date:"Nov 2025",title:"Panda: Test-Time Adaptation with Negative Data Augmentation",auth:"",note:"视觉模型的测试时适配。无关。"},
+ {id:"2512.01324",kind:"other",date:"Dec 2025",title:"Panda: Self-distillation of Reusable Sensor-level Representations for High Energy Physics",auth:"",note:"粒子物理。无关。"}
+];
+const tagTxt={early:"李昱琦",core:"Panda AI",found:"基础工作",related:"相关",other:"仅同名"};
+let filt="all";
+function drawPapers(){
+  const q=$("#q").value.trim().toLowerCase();
+  const list=P.filter(p=>(filt==="all"||p.kind===filt)&&(!q||(p.title+p.note+p.auth+p.id+(p.doi||"")).toLowerCase().includes(q)));
+  $("#paperList").innerHTML=list.length?list.map(p=>`<article class="paper ${p.kind==="core"?"core":""}">
+   <div class="meta"><span class="tag ${p.kind==="found"||p.kind==="early"?"found":p.kind==="other"?"other":""}">${tagTxt[p.kind]}</span><span>${p.id?"arXiv "+p.id:p.doi?"DOI "+esc(p.doi):"未上 arXiv"}</span><span>${esc(p.date)}</span></div>
+   <h3>${p.id||p.doi?`<a href="${p.id?"https://arxiv.org/abs/"+p.id:"https://doi.org/"+p.doi}" target="_blank" rel="noopener">${esc(p.title)}</a>`:esc(p.title)}</h3>
+   ${p.auth?`<div class="meta">${esc(p.auth)}</div>`:""}
+   <p>${esc(p.note)}</p></article>`).join(""):`<p>没有与“${esc(q)}”匹配的论文。</p>`;
+}
+document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+  filt=c.dataset.f;document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===c));drawPapers();}));
+$("#q").addEventListener("input",drawPapers);drawPapers();
+
+/* ---------- architecture ---------- */
+const N=[
+ {k:"data",x:20,y:30,t:"市场数据",s:"OHLCV · 60天",h:"市场数据",d:"沪深300成分股 60 天窗口内每日的开盘价、最高价、最低价、收盘价和成交量。",b:["同时作为市场状态模型和因子公式的原始输入。","信噪比低且非平稳，论文认为这正是纯深度学习难以胜任的原因。"]},
+ {k:"regime",x:280,y:30,t:"市场动态",s:"状态 z_t",h:"市场动态模块",d:"推断一个连续的隐含市场状态 z_t，刻画波动率、流动性等市场条件。",b:["让智能体根据当前市场状态调整搜索和决策。","在平稳市场有效的因子，可能在压力市场中失效，市场状态让这一点变得可见。"]},
+ {k:"llm",x:280,y:150,t:"CQ2 金融 LLM",s:"领域微调",h:"CQ2 领域大模型",d:"经过领域微调的大模型，负责提出和改进公式化 Alpha 因子。",b:["连接通用语言推理能力与金融上的严谨性。","其原始输出可能带有“金融毒性”（未来函数、无意义公式、过拟合），闭环的其余部分就是为了约束这一点。"]},
+ {k:"mcts",x:280,y:270,t:"Alpha 研究",s:"带约束的 MCTS",h:"Alpha 研究模块",d:"由 LLM 引导、在 Alpha 公式空间上进行的蒙特卡洛树搜索，生成过程中强制执行金融硬约束。",b:["每个节点是一个公式，回测分数决定下一步改进哪个分支。","频繁子树规避防止提案都集中到相同的构件上。","可以在下方的 MCTS 和 FSA 部分亲手试验。"]},
+ {k:"bt",x:20,y:270,t:"回测与执行",s:"IC · 成本 · 回撤",h:"回测与执行",d:"在计入交易成本和换手上限的前提下，用 IC、Rank IC、ICIR、收益和回撤为每个候选打分。",b:["15 个基点佣金、5 个基点滑点，每日调仓，换手上限 50%。","除收益外，还输出执行层面的诊断信息。"]},
+ {k:"upd",x:20,y:150,t:"更新算子",s:"证据包",h:"更新算子",d:"把回测结果和执行诊断汇总成证据包，再据此更新符号约束和模型参数。",b:["这一步让循环真正闭合：失败会改变下一轮的规则。","论文的消融实验显示，去掉快速反馈通道后，挖出的 Alpha 质量下降。"]}
+];
+const W=210,H=62;
+const E=[["data","regime","",0],["regime","llm","z_t",0],["llm","mcts","提案",0],["mcts","bt","候选",0],["bt","upd","证据",1],["upd","llm","约束",1]];
+const svg=$("#archSvg");const ns="http://www.w3.org/2000/svg";
+const ctr=n=>({x:n.x+W/2,y:n.y+H/2});
+const byK=Object.fromEntries(N.map(n=>[n.k,n]));
+let g=`<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>`;
+E.forEach(([a,b,l,fb])=>{
+  const A=byK[a],B=byK[b];let x1,y1,x2,y2;
+  if(A.y===B.y){x1=A.x<B.x?A.x+W:A.x;x2=A.x<B.x?B.x:B.x+W;y1=y2=A.y+H/2;}
+  else if(A.x===B.x){x1=x2=A.x+W/2;y1=A.y<B.y?A.y+H:A.y;y2=A.y<B.y?B.y:B.y+H;}
+  else{y1=y2=A.y+H/2;x1=A.x<B.x?A.x+W:A.x;x2=A.x<B.x?B.x:B.x+W;}
+  const col=fb?"var(--bamboo)":"var(--muted)";
+  g+=`<line class="edge ${fb?"fb":""}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" style="color:${col}" marker-end="url(#ah)"/>`;
+  if(l){const mx=(x1+x2)/2,my=(y1+y2)/2;const vert=x1===x2;g+=`<text class="lbl ${fb?"fb":""}" x="${vert?mx+8:mx}" y="${vert?my+4:my-7}" text-anchor="${vert?"start":"middle"}">${l}</text>`;}
+});
+N.forEach(n=>{g+=`<g class="node" data-k="${n.k}" tabindex="0" role="button" aria-label="${n.h}"><rect x="${n.x}" y="${n.y}" width="${W}" height="${H}" rx="9"/><text x="${n.x+14}" y="${n.y+27}">${n.t}</text><text class="sub" x="${n.x+14}" y="${n.y+46}">${n.s}</text></g>`;});
+svg.innerHTML=g;
+function selNode(k){const n=byK[k];svg.querySelectorAll(".node").forEach(e=>e.classList.toggle("on",e.dataset.k===k));
+  $("#archDetail").innerHTML=`<div class="eyebrow">模块</div><h3>${n.h}</h3><p>${n.d}</p><ul>${n.b.map(x=>`<li>${x}</li>`).join("")}</ul>`;}
+svg.querySelectorAll(".node").forEach(e=>{e.addEventListener("click",()=>selNode(e.dataset.k));e.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();selNode(e.dataset.k);}});});
+selNode("mcts");
+
+/* ---------- seeded RNG ---------- */
+function rng(seed){let s=seed>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+const gauss=r=>{let u=0,v=0;while(!u)u=r();while(!v)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+
+/* ---------- MCTS ---------- */
+const KIDS=[
+ ["Rank(Ts_Mean($close,5)/$close)",0.032],
+ ["Ts_Corr($close,$volume,10)",0.018],
+ ["($close-$open)/($high-$low+1e-3)",0.025],
+ ["-Ts_Std($close/Ts_Delay($close,1)-1,20)",0.040]
+];
+let M,mr;
+function resetM(){mr=rng(7);M={N:0,kids:KIDS.map(([f,q])=>({f,q,n:0,w:0})),log:[]};drawM();}
+const cv=()=>+$("#cSl").value;
+function uct(k,c){if(!k.n)return Infinity;return k.w/k.n+c*Math.sqrt(Math.log(Math.max(M.N,1))/k.n);}
+function stepM(){const c=cv();let best=null,bv=-Infinity;M.kids.forEach(k=>{const u=uct(k,c);if(u>bv){bv=u;best=k;}});
+  const r=best.q+0.03*gauss(mr);best.n++;best.w+=r;M.N++;
+  M.log.unshift(`#${M.N} 改进 ${best.f.slice(0,28)}${best.f.length>28?"…":""} → Rank IC ${r.toFixed(3)}`);if(M.log.length>40)M.log.pop();}
+function drawM(){const c=cv();let pick=null,bv=-Infinity;M.kids.forEach(k=>{const u=uct(k,c);if(u>bv){bv=u;pick=k;}});
+  const maxN=Math.max(1,...M.kids.map(k=>k.n));
+  $("#tree").innerHTML=`<div class="eyebrow">根节点 · 访问 ${M.N} 次 · 高亮为下一个选择</div>`+M.kids.map(k=>{const u=uct(k,c);
+   return `<div class="kid ${k===pick?"pick":""}"><code>${esc(k.f)}</code><span class="uct">${u===Infinity?"∞":u.toFixed(3)}</span>
+   <div class="nums"><span>N ${k.n}</span><span>Q/N ${k.n?(k.w/k.n).toFixed(3):"–"}</span><span>隐藏真实值 ${k.q.toFixed(3)}</span></div>
+   <div class="bar"><i style="width:${(k.n/maxN*100).toFixed(1)}%"></i></div></div>`;}).join("");
+  $("#mlog").innerHTML=M.log.length?M.log.map(esc).join("<br>"):"未访问的分支得分为 ∞，因此每个分支都会先被尝试一次。";
+  $("#cOut").textContent=c.toFixed(2);}
+$("#cSl").addEventListener("input",drawM);
+$("#step1").addEventListener("click",()=>{stepM();drawM();});
+$("#step20").addEventListener("click",()=>{for(let i=0;i<20;i++)stepM();drawM();});
+$("#resetM").addEventListener("click",resetM);resetM();
+
+/* ---------- FSA ---------- */
+const F=v=>({f:v}),O=(op,args,p)=>({op,args,p});
+const FEATS=["$close","$open","$high","$low","$volume","$vwap"];
+const SEED=[
+ O("Div",[O("Ts_Mean",[F("$close")],5),F("$close")]),
+ O("Div",[O("Ts_Mean",[F("$close")],20),F("$close")]),
+ O("Ts_Corr",[F("$close"),F("$volume")],10),
+ O("Rank",[O("Div",[O("Ts_Mean",[F("$close")],10),F("$close")])]),
+ O("Div",[O("Sub",[F("$close"),F("$open")]),O("Sub",[F("$high"),F("$low")])]),
+ O("Neg",[O("Ts_Std",[O("Div",[F("$close"),O("Ts_Delay",[F("$close")],1)])],20)]),
+ O("Mul",[O("Div",[O("Ts_Mean",[F("$close")],5),F("$close")]),O("Rank",[F("$volume")])])
+];
+const isFeat=n=>!!n.f;
+const allFeat=n=>isFeat(n)||n.args.every(allFeat);
+const str=n=>isFeat(n)?n.f:`${n.op}(${n.args.map(str).join(",")}${n.p!=null?","+n.p:""})`;
+const gstr=n=>isFeat(n)?n.f:`${n.op}(${n.args.map(gstr).join(",")}${n.p!=null?",·":""})`;
+function genes(n,parentRoot,out){ // maximal root genes: all-feature subtrees whose parent is not one
+  if(isFeat(n))return out;const me=allFeat(n);
+  if(me&&!parentRoot)out.push(gstr(n));
+  n.args.forEach(a=>genes(a,me,out));return out;}
+let fr,REPO,CANDS;
+function resetF(){fr=rng(11);REPO=SEED.slice();CANDS=[];drawF();}
+const pick=a=>a[Math.floor(fr()*a.length)];
+function randNode(d){
+  if(d<=0||fr()<0.25)return F(pick(FEATS));
+  const ops=[["Ts_Mean",1,[5,10,20]],["Ts_Std",1,[10,20]],["Ts_Delay",1,[1,5]],["Rank",1,null],["Neg",1,null],["Ts_Corr",2,[10,20]],["Div",2,null],["Sub",2,null],["Mul",2,null]];
+  const [op,ar,ps]=pick(ops);const args=[];for(let i=0;i<ar;i++)args.push(randNode(d-1));
+  // bias toward familiar blocks, as an LLM would
+  if(fr()<0.45)return O("Div",[O("Ts_Mean",[F("$close")],pick([5,10,20,60])),F("$close")]);
+  return O(op,args,ps?pick(ps):null);}
+function counts(){const m=new Map();REPO.forEach(n=>new Set(genes(n,false,[])).forEach(gn=>m.set(gn,(m.get(gn)||0)+1)));return [...m.entries()].sort((a,b)=>b[1]-a[1]);}
+function drawF(){const k=+$("#kSl").value;$("#kOut").textContent=k;const cs=counts();const banned=new Set(cs.slice(0,k).map(x=>x[0]));
+  $("#repo").innerHTML=REPO.map(n=>`<div>${esc(str(n))}</div>`).join("");
+  $("#genes").innerHTML=cs.map(([gn,c])=>`<span class="gene ${banned.has(gn)?"ban":""}">${esc(gn)}<b>×${c}</b></span>`).join("");
+  CANDS.forEach(c=>{c.ok=!genes(c.n,false,[]).some(gn=>banned.has(gn));});
+  $("#cands").innerHTML=CANDS.map(c=>`<div class="${c.ok?"ok":"rej"}"><code>${esc(str(c.n))}</code><span>${c.ok?"通过":"拒绝"}</span></div>`).join("");
+  $("#uniq").textContent=cs.length;
+  const tot=cs.reduce((s,x)=>s+x[1],0);$("#topShare").textContent=tot?Math.round(cs[0][1]/tot*100)+"%":"0%";}
+$("#kSl").addEventListener("input",drawF);
+$("#gen").addEventListener("click",()=>{CANDS=[];for(let i=0;i<6;i++){const r=randNode(3);CANDS.push({n:isFeat(r)?O("Rank",[r]):r});}drawF();});
+$("#admit").addEventListener("click",()=>{CANDS.filter(c=>c.ok).forEach(c=>REPO.push(c.n));CANDS=[];drawF();});
+$("#resetF").addEventListener("click",resetF);resetF();
+
+/* ---------- metrics sim ---------- */
+const NS=300,T=250;
+function pearson(a,b){const n=a.length;let ma=0,mb=0;for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];}ma/=n;mb/=n;let s=0,va=0,vb=0;for(let i=0;i<n;i++){const x=a[i]-ma,y=b[i]-mb;s+=x*y;va+=x*x;vb+=y*y;}return s/Math.sqrt(va*vb||1);}
+function ranks(a){const idx=a.map((v,i)=>[v,i]).sort((x,y)=>x[0]-y[0]);const r=new Array(a.length);idx.forEach(([,i],k)=>r[i]=k);return r;}
+function sim(){
+  const s=+$("#sSl").value,rho=+$("#pSl").value,dec=+$("#rSl").value,tails=$("#tails").checked,costs=$("#costs").checked;
+  const r=rng(42);let f=Array.from({length:NS},()=>gauss(r));const q=Math.floor(NS*0.2);
+  let prevL=new Set(),prevS=new Set();const ic=[],ric=[],eq=[];let v=1;
+  for(let t=0;t<T;t++){
+    const hi=t>=T/2,vol=hi?0.03:0.018,str=s*(hi?1-dec:1);
+    const ret=f.map(x=>{let e=gauss(r);if(tails&&r()<0.02)e*=8;return 0.01*str*x+vol*e;});
+    ic.push(pearson(f,ret));ric.push(pearson(ranks(f),ranks(ret)));
+    const ord=f.map((x,i)=>[x,i]).sort((a,b)=>b[0]-a[0]);const L=new Set(ord.slice(0,q).map(x=>x[1])),S=new Set(ord.slice(-q).map(x=>x[1]));
+    let pnl=0;L.forEach(i=>pnl+=ret[i]/q);S.forEach(i=>pnl-=ret[i]/q);pnl/=2;
+    if(costs&&t>0){let ch=0;L.forEach(i=>{if(!prevL.has(i))ch++;});S.forEach(i=>{if(!prevS.has(i))ch++;});pnl-=(ch/(2*q))*0.0020;}
+    prevL=L;prevS=S;v*=1+pnl;eq.push(v);
+    f=f.map(x=>rho*x+Math.sqrt(1-rho*rho)*gauss(r));
+  }
+  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length,sd=a=>{const m=mean(a);return Math.sqrt(mean(a.map(x=>(x-m)**2)));};
+  let pk=1,dd=0;eq.forEach(x=>{pk=Math.max(pk,x);dd=Math.min(dd,x/pk-1);});
+  const ar=Math.pow(eq[T-1],252/T)-1;
+  $("#mIC").textContent=mean(ic).toFixed(3);$("#mRIC").textContent=mean(ric).toFixed(3);
+  $("#mIR").textContent=(mean(ric)/sd(ric)).toFixed(2);$("#mAR").textContent=(ar*100).toFixed(1)+"%";$("#mDD").textContent=(dd*100).toFixed(1)+"%";
+  $("#sOut").textContent=s.toFixed(2);$("#pOut").textContent=rho.toFixed(2);$("#rOut").textContent=dec.toFixed(2);
+  drawIC(ric);drawEq(eq);
+}
+function drawIC(a){const w=560,h=150,pl=40,pr=8,pt=18,pb=20;const m=Math.max(0.15,...a.map(Math.abs));
+  const y=v=>pt+(h-pt-pb)/2-(v/m)*(h-pt-pb)/2,bw=(w-pl-pr)/a.length;
+  let s=`<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="每日 Rank IC 柱状图"><text x="${pl}" y="11">每日 Rank IC（绿色 ≥ 0，红色 &lt; 0）</text>`;
+  [m,0,-m].forEach(v=>{s+=`<line class="ax" x1="${pl}" x2="${w-pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-4}" y="${y(v)+3}" text-anchor="end">${v.toFixed(2)}</text>`;});
+  const mid=pl+(w-pl-pr)/2;s+=`<line x1="${mid}" x2="${mid}" y1="${pt}" y2="${h-pb}" stroke="var(--bamboo)" stroke-dasharray="3 3"/><text x="${mid+4}" y="${h-6}" style="fill:var(--bamboo)">高波动状态 →</text>`;
+  a.forEach((v,i)=>{const y0=y(0),y1=y(v);s+=`<rect x="${(pl+i*bw).toFixed(2)}" y="${Math.min(y0,y1).toFixed(2)}" width="${Math.max(bw-0.4,0.6).toFixed(2)}" height="${Math.abs(y1-y0).toFixed(2)}" fill="${v>=0?"var(--good)":"var(--bad)"}"/>`;});
+  $("#icChart").innerHTML=s+"</svg>";}
+function drawEq(a){const w=560,h=170,pl=40,pr=8,pt=18,pb=20;const lo=Math.min(...a,1),hi=Math.max(...a,1);const pad=(hi-lo)*0.08||0.01;const L=lo-pad,H=hi+pad;
+  const x=i=>pl+i*(w-pl-pr)/(a.length-1),y=v=>pt+(H-v)/(H-L)*(h-pt-pb);
+  let s=`<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="多空净值曲线"><text x="${pl}" y="11">多空组合净值，起点 1.00（阴影为回撤）</text>`;
+  [H,1,L].forEach(v=>{s+=`<line class="ax" x1="${pl}" x2="${w-pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-4}" y="${y(v)+3}" text-anchor="end">${v.toFixed(2)}</text>`;});
+  let pk=a[0],dp="";const pkArr=a.map(v=>pk=Math.max(pk,v));
+  dp=`M${x(0)},${y(pkArr[0])}`+pkArr.map((v,i)=>`L${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("")+a.map((v,i)=>[i,v]).reverse().map(([i,v])=>`L${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("")+"Z";
+  s+=`<path d="${dp}" fill="var(--bad-soft)"/>`;
+  s+=`<path d="M${a.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("L")}" fill="none" stroke="var(--jade)" stroke-width="2"/>`;
+  s+=`<circle cx="${x(a.length-1)}" cy="${y(a[a.length-1])}" r="3.5" fill="var(--jade)"/>`;
+  $("#eqChart").innerHTML=s+"</svg>";}
+["#sSl","#pSl","#rSl","#tails","#costs"].forEach(id=>$(id).addEventListener("input",sim));sim();
+
+/* ---------- Agora ---------- */
+const ROLES=[
+ ["研究报告智能体","撰写市场研究笔记，确定本轮要寻找的方向。"],
+ ["Alpha 挖掘智能体","提出并改进 Alpha 公式，使用 AlphaGen 的算子集和 Maskable PPO 工具。"],
+ ["Alpha 评估小组","用当前的指标库为新 Alpha 打分。"],
+ ["评价挖掘智能体","对指标库本身提出修改：新增、编辑或删除指标。评分标准正是由此不断进化。"],
+ ["因子指标评估小组","审查回测结果，决定哪些指标修改保留到下一轮。"]
+];
+let roleOn=3; // Evaluation-miner is the novel role
+function drawRoles(){$("#roles").innerHTML=ROLES.map(([t,d],i)=>`<li tabindex="0" role="button" class="${i===roleOn?"on":""}" data-i="${i}"><b>${t}</b><span>${d}</span></li>`).join("");
+  $("#roles").querySelectorAll("li").forEach(li=>{const go=()=>{roleOn=+li.dataset.i;drawRoles();$("#roles").querySelector(".on").focus();};li.addEventListener("click",go);li.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});});}
+drawRoles();
+function agoraRun(){
+  const pull=+$("#opSl").value,spd=+$("#evSl").value,R=100;
+  const run=(evolve)=>{const r=rng(5);let cur={s:0,o:0};const ho=[],ins=[];
+    for(let t=0;t<R;t++){const w=evolve?Math.max(-0.6,1-spd*t):1;let best=null,bv=-Infinity;
+      for(let k=0;k<8;k++){const c={s:cur.s+0.03*gauss(r)+0.004,o:Math.max(0,cur.o+pull+0.03*gauss(r))};const v=c.s+w*c.o;if(v>bv){bv=v;best=c;}}
+      if(best.s+w*best.o>cur.s+w*cur.o)cur=best;ho.push(cur.s-0.8*cur.o);ins.push(cur.s+cur.o);}
+    return {ho,ins};};
+  const F=run(false),C=run(true);
+  $("#opOut").textContent=pull.toFixed(3);$("#evOut").textContent=spd.toFixed(2);
+  const w=560,h=200,pl=40,pr=8,pt=12,pb=22;const all=[...F.ho,...C.ho,...F.ins];const lo=Math.min(0,...all),hi=Math.max(...all);const pad=(hi-lo)*0.06||0.1,L=lo-pad,H=hi+pad;
+  const x=i=>pl+i*(w-pl-pr)/(R-1),y=v=>pt+(H-v)/(H-L)*(h-pt-pb);const path=a=>"M"+a.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("L");
+  let g=`<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="100 轮中的留出期质量">`;
+  [H,0,L].forEach(v=>{g+=`<line class="ax" x1="${pl}" x2="${w-pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-4}" y="${y(v)+3}" text-anchor="end">${v.toFixed(1)}</text>`;});
+  [0,25,50,75,99].forEach(i=>{g+=`<text x="${x(i)}" y="${h-6}" text-anchor="middle">${i+1}</text>`;});
+  g+=`<path d="${path(F.ins)}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  g+=`<path d="${path(F.ho)}" fill="none" stroke="var(--bad)" stroke-width="2"/><path d="${path(C.ho)}" fill="none" stroke="var(--jade)" stroke-width="2"/>`;
+  g+=`<circle cx="${x(R-1)}" cy="${y(F.ho[R-1])}" r="3.5" fill="var(--bad)"/><circle cx="${x(R-1)}" cy="${y(C.ho[R-1])}" r="3.5" fill="var(--jade)"/>`;
+  $("#agChart").innerHTML=g+"</svg>";
+}
+["#opSl","#evSl"].forEach(id=>$(id).addEventListener("input",agoraRun));agoraRun();
+
+/* ---------- AlphaSchema ---------- */
+const SC={
+ E:[["vol","放量（达 20 日均量 3 倍）"],["gap","跳空高开超过 2%"],["hi","创 20 日新高"],["rev","日内反转"],["drop","连续三天下跌"]],
+ C:[["ext","接近近期极值"],["vwap","位于 VWAP 附近"],["regime","高波动状态"],["quant","截面前 20%"],["none","不设情境过滤"]],
+ Q:[["vconf","成交量确认"],["closehi","收盘接近当日高点"],["liq","仅限流动性好的股票"],["sect","板块同向运动"]],
+ D:[["cont","延续"],["rev","反转"]],
+ O:[["score","连续得分"],["decay","事件衰减"],["rank","截面排名"]]
+};
+const CODE={
+ E:{vol:"$volume/Ts_Mean($volume,20)>3",gap:"$open/Ts_Delay($close,1)-1>0.02",hi:"$close>=Ts_Max($high,20)",rev:"Sign($close-$open)!=Sign($open-Ts_Delay($close,1))",drop:"Ts_Sum($close<Ts_Delay($close,1),3)==3"},
+ C:{ext:"Abs($close/Ts_Max($high,60)-1)<0.03",vwap:"Abs($close/$vwap-1)<0.005",regime:"Ts_Std(Ret($close),20)>Ts_Mean(Ts_Std(Ret($close),20),120)",quant:"Rank(Ret($close,5))>0.8",none:""},
+ Q:{vconf:"$volume>Ts_Mean($volume,5)",closehi:"($close-$low)/($high-$low+1e-6)>0.8",liq:"Rank(Ts_Mean($amount,20))>0.3",sect:"Sign(SectorRet)==Sign(Ret($close))"},
+ O:{score:"Ret($close,5)",decay:"Decay_Linear(event,10)",rank:"Rank(Ret($close,5))"}
+};
+const opt=(arr,id)=>{$(id).innerHTML=arr.map(([k,t])=>`<option value="${k}">${t}</option>`).join("");};
+opt(SC.E,"#pE");opt(SC.C,"#pC");opt(SC.D,"#pD");opt(SC.O,"#pO");
+$("#pE").value="vol";$("#pC").value="ext";$("#pD").value="rev";$("#pO").value="decay";
+$("#pQ").innerHTML=SC.Q.map(([k,t])=>`<label><input type="checkbox" id="q_${k}" value="${k}" ${k==="closehi"?"checked":""}>${t}</label>`).join("");
+function drawPlan(){
+  const qs=[...$("#pQ").querySelectorAll("input:checked")].map(i=>i.value);
+  $("#pQ").querySelectorAll("input").forEach(i=>{i.disabled=!i.checked&&qs.length>=3;});
+  const lab=(arr,k)=>arr.find(a=>a[0]===k)[1];
+  const e=$("#pE").value,c=$("#pC").value,d=$("#pD").value,o=$("#pO").value;
+  const cond=[CODE.E[e],CODE.C[c],...qs.map(q=>CODE.Q[q])].filter(Boolean).join(" && ");
+  const sign=d==="rev"?"-":"";
+  let code=o==="decay"?`${sign}Decay_Linear(If(${cond},1,0),10)`:`If(${cond}, ${sign}${CODE.O[o]}, 0)`;
+  $("#planOut").innerHTML=`<span class="k">p = (e, c, Q, d, o)</span><br><span class="k">e</span> ${esc(lab(SC.E,e))}<br><span class="k">c</span> ${esc(lab(SC.C,c))}<br><span class="k">Q</span> ${qs.length?qs.map(q=>esc(lab(SC.Q,q))).join("；"):"（无）"}<br><span class="k">d</span> ${esc(lab(SC.D,d))}<br><span class="k">o</span> ${esc(lab(SC.O,o))}<span class="code">${esc(code)}</span>`;
+}
+["#pE","#pC","#pD","#pO"].forEach(id=>$(id).addEventListener("change",drawPlan));$("#pQ").addEventListener("change",drawPlan);drawPlan();
+
+// hidden reward over the plan space
+const nE=5,nC=5,nQ=4,nD=2,nO=3;
+const hr=rng(99);const g0=n=>Array.from({length:n},()=>gauss(hr));
+const fx={E:g0(nE),C:g0(nC),Q:g0(nQ),D:g0(nD),O:g0(nO),EC:Array.from({length:nE},()=>g0(nC)),ED:Array.from({length:nE},()=>g0(nD))};
+fx.EC[2][0]+=2.6;fx.EC[2][3]+=1.8;fx.ED[2][0]+=1.2;fx.EC[3][1]+=2.0;fx.ED[3][1]+=1.4;
+function trueR(p){let v=0.4*fx.E[p.e]+0.4*fx.C[p.c]+0.25*fx.D[p.d]+0.2*fx.O[p.o]+0.9*fx.EC[p.e][p.c]+0.6*fx.ED[p.e][p.d];
+  p.q.forEach((b,i)=>{if(b)v+=0.2*fx.Q[i];});return 0.02+0.008*v;}
+let SS;
+function sReset(){SS={r:rng(3),rr:rng(4),hist:[],rand:[],cnt:Array.from({length:nE},()=>Array(nC).fill(0))};drawSearch();}
+function randPlan(r){const q=[0,0,0,0];let n=Math.floor(r()*4);while(n-->0)q[Math.floor(r()*nQ)]=1;return {e:Math.floor(r()*nE),c:Math.floor(r()*nC),d:Math.floor(r()*nD),o:Math.floor(r()*nO),q};}
+function mutate(p,r){const c={...p,q:p.q.slice()};const f=Math.floor(r()*5);
+  if(f===0)c.e=Math.floor(r()*nE);else if(f===1)c.c=Math.floor(r()*nC);else if(f===2)c.d=1-c.d;else if(f===3)c.o=Math.floor(r()*nO);else{const i=Math.floor(r()*nQ);c.q[i]=1-c.q[i];}return c;}
+function surrogate(){ // per-field averages of observed reward, plus Event×Context cell average
+  const H=SS.hist,m=H.length?H.reduce((s,h)=>s+h.y,0)/H.length:0.02;
+  const avg=(f)=>{const acc={};H.forEach(h=>{const k=f(h.p);(acc[k]=acc[k]||[0,0]);acc[k][0]+=h.y-m;acc[k][1]++;});return k=>acc[k]?acc[k][0]/(acc[k][1]+1):0;};
+  const aE=avg(p=>p.e),aC=avg(p=>p.c),aD=avg(p=>p.d),aO=avg(p=>p.o),aEC=avg(p=>p.e+"_"+p.c),aED=avg(p=>p.e+"_"+p.d);
+  return p=>m+0.5*(aE(p.e)+aC(p.c)+aD(p.d)+aO(p.o))+aEC(p.e+"_"+p.c)+0.5*aED(p.e+"_"+p.d);}
+function sBatch(){
+  const x=+$("#xSl").value,mu=+$("#mSl").value,r=SS.r;const sur=surrogate();
+  const top=SS.hist.slice().sort((a,b)=>b.y-a.y).slice(0,4);
+  for(let i=0;i<16;i++){const u=r();let p;
+    if(!SS.hist.length||u<x)p=randPlan(r);
+    else if(u<x+mu&&top.length)p=mutate(top[Math.floor(r()*top.length)].p,r);
+    else{let best=null,bv=-Infinity;for(let k=0;k<60;k++){const c=randPlan(r);const v=sur(c);if(v>bv){bv=v;best=c;}}p=best;}
+    const y=trueR(p)+0.004*gauss(r);SS.hist.push({p,y});SS.cnt[p.e][p.c]++;
+    const rp=randPlan(SS.rr);SS.rand.push(trueR(rp)+0.004*gauss(SS.rr));}
+}
+function drawSearch(){
+  const x=+$("#xSl").value,mu=+$("#mSl").value;$("#xOut").textContent=Math.round(x*100)+"%";$("#mOut").textContent=Math.round(mu*100)+"%";
+  $("#eOut").textContent=Math.max(0,Math.round((1-x-mu)*100))+"%";
+  $("#sN").textContent=SS.hist.length;
+  $("#sBest").textContent=SS.hist.length?Math.max(...SS.hist.map(h=>h.y)).toFixed(3):"–";
+  $("#sRand").textContent=SS.rand.length?Math.max(...SS.rand).toFixed(3):"–";
+  const mx=Math.max(1,...SS.cnt.flat());const short=["近极值","VWAP","高波动","前20%","无"];
+  const eShort=["放量","跳空","20日新高","反转","连跌3天"];
+  let t=`<table><thead><tr><th></th>${short.map(s=>`<th>${s}</th>`).join("")}</tr></thead><tbody>`;
+  SS.cnt.forEach((row,i)=>{t+=`<tr><th>${eShort[i]}</th>${row.map(v=>`<td style="background:color-mix(in srgb,var(--jade) ${Math.round(v/mx*85)}%,var(--bg))${v/mx>0.55?";color:var(--surface)":""}">${v||""}</td>`).join("")}</tr>`;});
+  $("#heat").innerHTML=t+"</tbody></table>";
+}
+$("#xSl").addEventListener("input",()=>{if(+$("#xSl").value+ +$("#mSl").value>1)$("#mSl").value=(1-$("#xSl").value).toFixed(2);drawSearch();});
+$("#mSl").addEventListener("input",()=>{if(+$("#xSl").value+ +$("#mSl").value>1)$("#xSl").value=(1-$("#mSl").value).toFixed(2);drawSearch();});
+$("#sRun").addEventListener("click",()=>{sBatch();drawSearch();});
+$("#sRun10").addEventListener("click",()=>{for(let i=0;i<10;i++)sBatch();drawSearch();});
+$("#sReset").addEventListener("click",sReset);sReset();
+
+/* ---------- glossary ---------- */
+const G=[
+ ["Alpha 因子","为每只股票打分的公式，分数越高，预期未来收益越高。例如 Ts_Mean($close,5)/$close（短期反转）。"],
+ ["公式化 Alpha","用算子作用于原始特征、写成显式表达式的 Alpha。与神经网络预测不同，它易读、易审计。"],
+ ["神经符号","把神经模型（LLM）与可精确检验的符号机制（公式、硬约束、搜索树）结合起来。"],
+ ["金融毒性","论文对 LLM 在金融场景中有害输出的称呼：未来函数、无效公式、过拟合或无法交易的信号。"],
+ ["市场状态（z_t）","描述波动率、流动性等当前市场条件的隐变量。同一个因子在不同状态下表现可能截然不同。"],
+ ["MCTS","蒙特卡洛树搜索。反复用 UCT 选择分支、扩展、评估，再把分数反向传播。"],
+ ["UCT","树的上置信界：平均奖励加上一个探索奖励，分支被访问得越多，探索奖励越小。"],
+ ["根基因","叶子全部为原始特征的子树（如 Ts_Mean($close,·)）。FSA 用它衡量结构上的重复。"],
+ ["IC / Rank IC","因子值与未来收益在截面上的相关系数，用原始值计算为 IC，用排名计算为 Rank IC。"],
+ ["ICIR","IC 均值除以 IC 的标准差。越高说明因子每天的表现越稳定。"],
+ ["最大回撤","组合净值从峰值到谷底的最大跌幅。CQ2 论文报告其回撤比基线低 25.7%。"],
+ ["语义方案","AlphaSchema 中的五元组（事件、情境、质量条件、方向、输出），在写代码之前就说明因子的交易逻辑。"],
+ ["代理模型","根据方案字段预测其奖励的低成本模型，让搜索无需逐一回测就能为方案排序。AlphaSchema 使用梯度提升树。"],
+ ["指标库","Agora 中不断进化的评价函数集合，从 4 个内置指标开始，每轮都会变化。"],
+ ["夏普比率","年化收益除以年化波动率。Agora 报告的留出期夏普为 +1.87。"],
+ ["多空组合","买入得分最高的股票、做空得分最低的股票，使大盘涨跌基本相互抵消。"],
+ ["留出期","不参与任何搜索和调参、只在最后使用一次的数据，用来客观检验结果。"],
+ ["中证1000 / 中证500","规模排在沪深300之后的中小盘 A 股指数。Agora 在中证1000上测试，AlphaSchema 在沪深300和中证500上测试。"],
+ ["沪深300","沪深两市规模最大的 300 只 A 股组成的指数，CQ2 的测试股票池。"]
+];
+$("#gloss").innerHTML=G.map(([t,d])=>`<details><summary>${esc(t)}</summary><p>${esc(d)}</p></details>`).join("");
+})();
+</script>
+</body>
+</html>
